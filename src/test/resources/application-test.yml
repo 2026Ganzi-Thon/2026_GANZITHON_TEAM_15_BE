@@ -1,0 +1,13 @@
+# 테스트는 Docker 없이 돌도록 H2(MySQL 모드)를 사용합니다.
+spring:
+  datasource:
+    url: jdbc:h2:mem:teolhanol;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
