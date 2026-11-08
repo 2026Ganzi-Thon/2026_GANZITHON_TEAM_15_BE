@@ -28,3 +28,27 @@ springdoc:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  # 기능명세서 5장 정책 수치 (시연 기준 초안)
+  policy:
+    auth:
+      max-login-failures: 5
+      lock-minutes: 5
+    diary:
+      max-length: 1000
+      daily-limit: 3
+    care:
+      max-user-messages: 10
+      ai-response-max-length: 300
+    worry:
+      max-length: 200
+      daily-limit: 3
+      wool-cap: 10
+      auto-graduate-days: 7
+      page-size: 20
+      protected-view-min-sent-wools: 5
+      auto-hide-report-count: 3
+    wool:
+      max-length: 100
+    safety:
+      crisis-banner-hours: 24
+      llm-timeout-seconds: 5
