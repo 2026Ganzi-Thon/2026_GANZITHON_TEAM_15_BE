@@ -3,7 +3,9 @@ package com.ganzithon.teolhanol.domain.diary.entity;
 import com.ganzithon.teolhanol.domain.user.entity.User;
 import com.ganzithon.teolhanol.global.entity.BaseTimeEntity;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
+import com.ganzithon.teolhanol.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -24,7 +26,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 감정 일기. 일기 하나가 케어 1회와 기록 양 1마리에 대응합니다 (DRY-01, SHP-02).
- * content는 #3에서 암호화 저장으로 바뀝니다.
+ * content는 DB에 암호화해서 저장합니다.
  */
 @Getter
 @Entity
@@ -51,6 +53,7 @@ public class Diary extends BaseTimeEntity {
     @Column(nullable = false)
     private int intensity;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

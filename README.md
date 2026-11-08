@@ -38,7 +38,7 @@ docker compose up -d
 | --- | --- | --- |
 | `local` (기본) | 로컬 개발 | Docker MySQL, `ddl-auto: update` |
 | `test` | 자동 테스트 | H2 (MySQL 모드), `create-drop` |
-| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ddl-auto: validate` |
+| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `ddl-auto: validate` |
 
 ## 패키지 구조
 
@@ -50,6 +50,15 @@ com.ganzithon.teolhanol
 │   └── response
 └── domain          # 기능별 도메인 (auth, diary, care, sheep, farm, wool, safety, report)
 ```
+
+## 민감정보 암호화
+
+일기 본문, 케어 대화, 요약 카드는 AES-256-GCM으로 암호화해서 저장합니다 (`global/crypto`).
+엔티티 필드에 `@Convert(converter = EncryptedStringConverter.class)`를 붙이면 적용됩니다.
+
+- 로컬·테스트: 설정 파일의 개발용 키를 사용
+- 운영: `APP_CRYPTO_KEY` 환경변수 필수 (`openssl rand -base64 32`로 생성). 키를 잃어버리면 기존 데이터를 복호화할 수 없으니 안전하게 보관하세요.
+- 일기·대화 본문은 로그에도 남기지 않습니다.
 
 ## 공통 응답 형식
 

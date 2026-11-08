@@ -1,7 +1,9 @@
 package com.ganzithon.teolhanol.domain.care.entity;
 
 import com.ganzithon.teolhanol.domain.diary.entity.Diary;
+import com.ganzithon.teolhanol.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,7 +22,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 케어 마무리 요약 카드 (CARE-03). 일기 1개당 1개. summary는 #3에서 암호화 저장으로 바뀝니다. */
+/** 케어 마무리 요약 카드 (CARE-03). 일기 1개당 1개. summary는 DB에 암호화해서 저장합니다. */
 @Getter
 @Entity
 @Table(name = "care_summaries")
@@ -35,6 +37,7 @@ public class CareSummary {
     @JoinColumn(name = "diary_id", nullable = false, unique = true)
     private Diary diary;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
 

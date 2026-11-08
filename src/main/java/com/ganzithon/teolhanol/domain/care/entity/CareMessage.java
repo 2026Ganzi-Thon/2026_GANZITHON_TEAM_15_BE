@@ -4,7 +4,9 @@ import com.ganzithon.teolhanol.domain.diary.entity.Diary;
 import jakarta.persistence.EntityListeners;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.ganzithon.teolhanol.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -23,7 +25,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 케어 대화 메시지 (CARE-02). content는 #3에서 암호화 저장으로 바뀝니다. */
+/** 케어 대화 메시지 (CARE-02). content는 DB에 암호화해서 저장합니다. */
 @Getter
 @Entity
 @Table(name = "care_messages", indexes = @Index(name = "idx_care_message_diary", columnList = "diary_id, created_at"))
@@ -43,6 +45,7 @@ public class CareMessage {
     @Column(nullable = false, length = 10)
     private MessageRole role;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
