@@ -22,7 +22,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 케어 마무리 요약 카드 (CARE-03). 일기 1개당 1개. summary는 DB에 암호화해서 저장합니다. */
+/** 케어 마무리 카드 '오늘 받은 말' (CARE-03). 오늘의 마음 1개당 1개. summary는 DB에 암호화해서 저장합니다. */
 @Getter
 @Entity
 @Table(name = "care_summaries")
@@ -41,17 +41,12 @@ public class CareSummary {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private CareRating rating;
-
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
-    public CareSummary(Diary diary, String summary, CareRating rating, LocalDateTime completedAt) {
+    public CareSummary(Diary diary, String summary, LocalDateTime completedAt) {
         this.diary = diary;
         this.summary = summary;
-        this.rating = rating;
         this.completedAt = completedAt;
     }
 }

@@ -35,15 +35,18 @@ app:
     chat-timeout-seconds: 60
     max-retries: 2
     server-fallback: true
-  # 기능명세서 5장 정책 수치 (시연 기준 초안)
+  # 기능명세서 5장 정책 수치 (시연 기준 초안, 2026-11-08 와이어프레임 v2 기준)
   policy:
     auth:
       max-login-failures: 5
       lock-minutes: 5
+      nickname-min-length: 2
+      nickname-max-length: 12
+      password-min-length: 8
     diary:
-      max-length: 1000
       daily-limit: 3
     care:
+      min-user-messages-for-wool: 3
       max-user-messages: 10
       ai-response-max-length: 300
     worry:

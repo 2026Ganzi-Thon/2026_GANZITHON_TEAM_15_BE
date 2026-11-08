@@ -49,13 +49,18 @@ public class Wool {
     @Column(nullable = false, length = 100)
     private String content;
 
+    /** 어조 다시 확인(SAF-04)에서 바꿀 문장을 제안받고도 그대로 보낸 조언인지 */
+    @Column(name = "sent_as_is", nullable = false)
+    private boolean sentAsIs;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Wool(WorrySheep sheep, User sender, String content) {
+    public Wool(WorrySheep sheep, User sender, String content, boolean sentAsIs) {
         this.sheep = sheep;
         this.sender = sender;
         this.content = content;
+        this.sentAsIs = sentAsIs;
     }
 }

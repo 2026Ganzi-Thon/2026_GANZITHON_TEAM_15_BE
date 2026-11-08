@@ -44,7 +44,7 @@ class EntityMappingTest {
     @Autowired WoolRepository woolRepository;
 
     private User user(String loginId) {
-        return userRepository.saveAndFlush(new User(loginId, "hash", "다정한 목동 #" + loginId));
+        return userRepository.saveAndFlush(new User(loginId + "@test.com", "hash", "목동" + loginId));
     }
 
     @Test
@@ -68,23 +68,22 @@ class EntityMappingTest {
     }
 
     @Test
-    void 위기로_판정된_일기는_케어가_중단된_상태로_저장된다() {
-        User user = user("1003");
-        Diary safe = diaryRepository.saveAndFlush(new Diary(user, Emotion.CALM, 2, "평온한 하루", RiskLevel.SAFE));
-        Diary crisis = diaryRepository.saveAndFlush(new Diary(user, Emotion.DEPRESSED, 5, "힘든 하루", RiskLevel.CRISIS));
+    void 오늘의_마음은_감정만으로_만들어지고_기본값이_채워진다() {
+        Diary diary = diaryRepository.saveAndFlush(new Diary(user("1003"), Emotion.TIRED));
 
-        assertThat(safe.getCareStatus()).isEqualTo(CareStatus.NONE);
-        assertThat(crisis.getCareStatus()).isEqualTo(CareStatus.STOPPED);
+        assertThat(diary.getCareStatus()).isEqualTo(CareStatus.NONE);
+        assertThat(diary.getRiskLevel()).isEqualTo(RiskLevel.SAFE);
+        assertThat(diary.isCrisisDetected()).isFalse();
+        assertThat(diary.getUserMessageCount()).isZero();
     }
 
     @Test
     void 요약_카드는_일기당_하나만_저장된다() {
-        Diary diary = diaryRepository.saveAndFlush(
-                new Diary(user("1004"), Emotion.ANXIOUS, 3, "불안한 하루", RiskLevel.SAFE));
-        careSummaryRepository.saveAndFlush(new CareSummary(diary, "요약", null, LocalDateTime.now()));
+        Diary diary = diaryRepository.saveAndFlush(new Diary(user("1004"), Emotion.ANXIOUS));
+        careSummaryRepository.saveAndFlush(new CareSummary(diary, "요약", LocalDateTime.now()));
 
         assertThatThrownBy(() -> careSummaryRepository.saveAndFlush(
-                new CareSummary(diary, "요약2", null, LocalDateTime.now())))
+                new CareSummary(diary, "요약2", LocalDateTime.now())))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -92,14 +91,14 @@ class EntityMappingTest {
     void 같은_양에_같은_사람이_조언을_두_번_보낼_수_없다() {
         User owner = user("1005");
         User sender = user("1006");
-        Farm farm = farmRepository.saveAndFlush(new Farm("CAREER", "취업·진로", "설명", 1));
+        Farm farm = farmRepository.saveAndFlush(new Farm("CAREER", "진로·취업", "진로", "설명", 1));
         WorrySheep sheep = worrySheepRepository.saveAndFlush(new WorrySheep(owner, farm, "고민", RiskLevel.SAFE));
 
         assertThat(sheep.getStatus()).isEqualTo(WorrySheepStatus.ACTIVE);
         assertThat(sheep.getStage()).isEqualTo(1);
 
-        woolRepository.saveAndFlush(new Wool(sheep, sender, "응원해요"));
-        assertThatThrownBy(() -> woolRepository.saveAndFlush(new Wool(sheep, sender, "또 응원해요")))
+        woolRepository.saveAndFlush(new Wool(sheep, sender, "응원해요", false));
+        assertThatThrownBy(() -> woolRepository.saveAndFlush(new Wool(sheep, sender, "또 응원해요", true)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 class SheepStageTest {
 
     @ParameterizedTest(name = "나의 양 털 {0}개 → {1}단계")
-    @CsvSource({"0,1", "2,1", "3,2", "9,2", "10,3", "19,3", "20,4", "29,4", "30,5", "100,5"})
+    @CsvSource({"0,1", "2,1", "3,2", "5,2", "6,3", "8,3", "9,4", "11,4", "12,5", "100,5"})
     void 나의_양_단계(int wool, int level) {
         assertThat(SheepStage.ofMySheep(wool).getLevel()).isEqualTo(level);
     }

@@ -21,7 +21,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 서버 시작 시 고정 목장 8개와 안전 패턴을 넣습니다.
+ * 서버 시작 시 고정 목장 4곳과 안전 패턴을 넣습니다.
  * 이미 있는 데이터는 건너뛰므로 여러 번 실행해도 안전합니다.
  */
 @Slf4j
@@ -50,7 +50,7 @@ public class SeedDataInitializer implements ApplicationRunner {
         int added = 0;
         for (FarmSeed seed : seeds) {
             if (!farmRepository.existsByCode(seed.code())) {
-                farmRepository.save(new Farm(seed.code(), seed.name(), seed.description(), seed.sortOrder()));
+                farmRepository.save(new Farm(seed.code(), seed.name(), seed.tabName(), seed.description(), seed.sortOrder()));
                 added++;
             }
         }
@@ -88,6 +88,6 @@ public class SeedDataInitializer implements ApplicationRunner {
         }
     }
 
-    record FarmSeed(String code, String name, String description, int sortOrder) {
+    record FarmSeed(String code, String name, String tabName, String description, int sortOrder) {
     }
 }

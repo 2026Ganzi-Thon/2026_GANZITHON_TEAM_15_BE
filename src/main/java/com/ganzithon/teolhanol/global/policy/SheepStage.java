@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 양 단계 기준표 (기능명세서 5장).
- * 나의 양은 누적 케어 수, 고민 양은 받은 조언 수로 단계를 정합니다.
+ * 나의 양은 털 3올마다 한 단계(누적 털), 고민 양은 받은 조언 수로 단계를 정합니다.
  */
 @Getter
 @RequiredArgsConstructor
@@ -13,9 +13,9 @@ public enum SheepStage {
 
     SHORN(1, "털 깎은 양", 0, 0),
     FLUFFY(2, "보송한 양", 3, 1),
-    COZY(3, "포근한 양", 10, 3),
-    PUFFY(4, "몽글몽글 양", 20, 6),
-    CLOUD(5, "구름 양", 30, 10);
+    COZY(3, "포근한 양", 6, 3),
+    PUFFY(4, "몽글몽글 양", 9, 6),
+    CLOUD(5, "구름 양", 12, 10);
 
     private final int level;
     private final String label;

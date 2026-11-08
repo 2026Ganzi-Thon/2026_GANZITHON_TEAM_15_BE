@@ -3,7 +3,7 @@ package com.ganzithon.teolhanol.domain.diary.entity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** 감정 일기의 대표 감정 (기능명세서 5장 감정 목록) */
+/** 오늘의 마음에서 고르는 대표 감정 (기능명세서 5장 감정 목록) */
 @Getter
 @RequiredArgsConstructor
 public enum Emotion {

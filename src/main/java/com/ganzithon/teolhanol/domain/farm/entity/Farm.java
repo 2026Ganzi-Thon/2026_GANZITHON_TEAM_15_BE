@@ -19,7 +19,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 고민 주제별 목장. 고정 8개를 시드 데이터로 넣습니다 (FRM-01). */
+/** 고민 주제별 목장. 고정 4곳을 시드 데이터로 넣습니다 (FRM-01). */
 @Getter
 @Entity
 @Table(name = "farms")
@@ -36,15 +36,20 @@ public class Farm {
     @Column(nullable = false, length = 30)
     private String name;
 
+    /** 목장 화면 주제 탭에 보이는 짧은 이름 (예: 진로) */
+    @Column(name = "tab_name", nullable = false, length = 10)
+    private String tabName;
+
     @Column(nullable = false, length = 100)
     private String description;
 
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
-    public Farm(String code, String name, String description, int sortOrder) {
+    public Farm(String code, String name, String tabName, String description, int sortOrder) {
         this.code = code;
         this.name = name;
+        this.tabName = tabName;
         this.description = description;
         this.sortOrder = sortOrder;
     }
