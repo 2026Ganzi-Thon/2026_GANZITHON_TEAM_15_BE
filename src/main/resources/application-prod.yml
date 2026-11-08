@@ -11,3 +11,8 @@ spring:
 springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
+
+app:
+  crypto:
+    # 필수. 생성: openssl rand -base64 32
+    key: ${APP_CRYPTO_KEY}

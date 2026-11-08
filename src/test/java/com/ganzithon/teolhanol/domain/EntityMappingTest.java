@@ -21,6 +21,8 @@ import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
 import com.ganzithon.teolhanol.domain.worry.repository.WorrySheepRepository;
 import com.ganzithon.teolhanol.global.config.JpaConfig;
+import com.ganzithon.teolhanol.global.crypto.AesGcmEncryptor;
+import com.ganzithon.teolhanol.global.crypto.EncryptedStringConverter;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -30,7 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @DataJpaTest
-@Import(JpaConfig.class)
+@Import({JpaConfig.class, AesGcmEncryptor.class, EncryptedStringConverter.class})
 class EntityMappingTest {
 
     @Autowired UserRepository userRepository;
