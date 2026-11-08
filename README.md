@@ -8,6 +8,7 @@
 - Spring Web MVC, Spring Data JPA, Spring Security, Bean Validation
 - MySQL 8.4 (로컬은 Docker), 테스트는 H2(MySQL 모드)
 - springdoc-openapi (Swagger UI)
+- Claude API (`anthropic-java` SDK, 기본 모델 `claude-opus-5-5`)
 
 ## 로컬 실행
 
@@ -38,7 +39,7 @@ docker compose up -d
 | --- | --- | --- |
 | `local` (기본) | 로컬 개발 | Docker MySQL, `ddl-auto: update` |
 | `test` | 자동 테스트 | H2 (MySQL 모드), `create-drop` |
-| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `ddl-auto: validate` |
+| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `ANTHROPIC_API_KEY`, `ddl-auto: validate` |
 
 ## 패키지 구조
 
@@ -66,6 +67,23 @@ com.ganzithon.teolhanol
 - 패턴을 추가하려면 `seed/safety-patterns.json`에 넣고 서버를 다시 시작하면 됩니다.
 - 기능명세서 5장 수치는 `application.yml`의 `app.policy`에 있고, 코드에서는 `PolicyProperties`로 읽습니다.
 - 양 단계 기준표는 `SheepStage` (`ofMySheep`, `ofWorrySheep`)를 사용합니다.
+
+## LLM (Claude API)
+
+위험도 분류, 케어 대화, 요약, 조언 필터는 `global/llm`의 `LlmClient`를 통해 호출합니다.
+
+| 메서드 | 용도 |
+| --- | --- |
+| `complete(request)` | 응답 전체를 한 번에 받기 |
+| `completeJson(request, Type.class)` | 응답을 JSON 스키마에 맞춰 객체로 받기 (분류 결과 등) |
+| `stream(request, onDelta)` | 조각 단위로 받기 (케어 대화 SSE) |
+
+- 요청은 `LlmRequest.classification(...)`(생각 깊이 낮음, 재시도 없음, 타임아웃 지정) 또는 `LlmRequest.chat(...)`으로 만듭니다.
+- 실패하면 항상 `LlmException`이 나고, `type`(`TIMEOUT`, `UNAVAILABLE`, `REFUSAL`, `INVALID_RESPONSE`, `API_ERROR`)을 보고 대체 로직으로 넘어가면 됩니다.
+- 프롬프트는 `src/main/resources/prompts/{이름}.txt`에 두고 `PromptLoader`로 읽습니다. `withSafetyGuide(이름)`은 공통 안전 지침(`common-safety.txt`)을 앞에 붙입니다.
+- `ANTHROPIC_API_KEY`가 없으면 LLM 없이 서버가 뜨고 모든 호출이 `UNAVAILABLE`로 실패합니다.
+- LLM에는 본문만 보내고 아이디·닉네임은 보내지 않습니다. Claude API는 기본적으로 API 데이터를 모델 학습에 쓰지 않습니다.
+- 안전 분류기가 응답을 거절하면 서버가 다른 모델로 다시 시도하는 기능(`app.llm.server-fallback`)을 켜 두었습니다.
 
 ## 공통 응답 형식
 
