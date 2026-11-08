@@ -4,4 +4,6 @@ import com.ganzithon.teolhanol.domain.farm.entity.Farm;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FarmRepository extends JpaRepository<Farm, Long> {
+
+    boolean existsByCode(String code);
 }
