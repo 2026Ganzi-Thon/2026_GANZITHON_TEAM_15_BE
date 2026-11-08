@@ -6,7 +6,8 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate
+      # 해커톤 일정상 마이그레이션 도구 없이 엔티티 기준으로 스키마를 맞춥니다. 안정화 후 validate로 바꾸세요.
+      ddl-auto: ${JPA_DDL_AUTO:update}
 
 springdoc:
   swagger-ui:

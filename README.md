@@ -94,6 +94,12 @@ com.ganzithon.teolhanol
 
 에러 코드는 `global/exception/ErrorCode`에 모아 둡니다. 안내 문구는 비난·명령 없는 존댓말로 씁니다.
 
+## CI/CD
+
+- PR마다 GitHub Actions가 빌드와 테스트를 돌립니다.
+- `main`에 머지되면 Docker 이미지를 GHCR에 올리고 AWS EC2에 배포합니다.
+- EC2 준비와 필요한 Secrets는 [docs/DEPLOY.md](docs/DEPLOY.md)를 보세요.
+
 ## 협업 규칙
 
 - 이슈 하나당 브랜치 하나: `feat/{이슈번호}-{간단한-설명}` (예: `feat/1-project-setup`)
