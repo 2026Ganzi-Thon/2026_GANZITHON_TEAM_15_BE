@@ -28,6 +28,13 @@ springdoc:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  llm:
+    api-key: ${ANTHROPIC_API_KEY:}
+    base-url: ${ANTHROPIC_BASE_URL:}
+    model: ${LLM_MODEL:claude-opus-5-5}
+    chat-timeout-seconds: 60
+    max-retries: 2
+    server-fallback: true
   # 기능명세서 5장 정책 수치 (시연 기준 초안)
   policy:
     auth:
