@@ -1,0 +1,13 @@
+# 운영: 모든 접속 정보는 환경변수로 주입합니다.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}

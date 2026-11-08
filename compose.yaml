@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: teolhanol-mysql
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-teolhanol}
+      MYSQL_USER: ${DB_USERNAME:-teolhanol}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-teolhanol}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    volumes:
+      - teolhanol-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  teolhanol-mysql:
