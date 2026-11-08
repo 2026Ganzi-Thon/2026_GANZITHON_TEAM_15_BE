@@ -54,16 +54,16 @@ com.ganzithon.teolhanol
 
 ## 민감정보 암호화
 
-일기 본문, 케어 대화, 요약 카드는 AES-256-GCM으로 암호화해서 저장합니다 (`global/crypto`).
+케어 대화와 마무리 카드는 AES-256-GCM으로 암호화해서 저장합니다 (`global/crypto`).
 엔티티 필드에 `@Convert(converter = EncryptedStringConverter.class)`를 붙이면 적용됩니다.
 
 - 로컬·테스트: 설정 파일의 개발용 키를 사용
 - 운영: `APP_CRYPTO_KEY` 환경변수 필수 (`openssl rand -base64 32`로 생성). 키를 잃어버리면 기존 데이터를 복호화할 수 없으니 안전하게 보관하세요.
-- 일기·대화 본문은 로그에도 남기지 않습니다.
+- 대화 본문은 로그에도 남기지 않습니다.
 
 ## 시드 데이터와 정책 수치
 
-- 서버가 시작될 때 `src/main/resources/seed/`의 목장 8개와 안전 패턴(위기 키워드, 금칙어, AI 응답 금지 패턴, 개인정보 정규식)을 넣습니다. 이미 있는 데이터는 건너뜁니다.
+- 서버가 시작될 때 `src/main/resources/seed/`의 목장 4곳과 안전 패턴(위기 키워드, 금칙어, AI 응답 금지 패턴, 개인정보 정규식)을 넣습니다. 이미 있는 데이터는 건너뜁니다.
 - 패턴을 추가하려면 `seed/safety-patterns.json`에 넣고 서버를 다시 시작하면 됩니다.
 - 기능명세서 5장 수치는 `application.yml`의 `app.policy`에 있고, 코드에서는 `PolicyProperties`로 읽습니다.
 - 양 단계 기준표는 `SheepStage` (`ofMySheep`, `ofWorrySheep`)를 사용합니다.
@@ -82,7 +82,7 @@ com.ganzithon.teolhanol
 - 실패하면 항상 `LlmException`이 나고, `type`(`TIMEOUT`, `UNAVAILABLE`, `REFUSAL`, `INVALID_RESPONSE`, `API_ERROR`)을 보고 대체 로직으로 넘어가면 됩니다.
 - 프롬프트는 `src/main/resources/prompts/{이름}.txt`에 두고 `PromptLoader`로 읽습니다. `withSafetyGuide(이름)`은 공통 안전 지침(`common-safety.txt`)을 앞에 붙입니다.
 - `ANTHROPIC_API_KEY`가 없으면 LLM 없이 서버가 뜨고 모든 호출이 `UNAVAILABLE`로 실패합니다.
-- LLM에는 본문만 보내고 아이디·닉네임은 보내지 않습니다. Claude API는 기본적으로 API 데이터를 모델 학습에 쓰지 않습니다.
+- LLM에는 본문만 보내고 이메일·닉네임은 보내지 않습니다. Claude API는 기본적으로 API 데이터를 모델 학습에 쓰지 않습니다.
 - 안전 분류기가 응답을 거절하면 서버가 다른 모델로 다시 시도하는 기능(`app.llm.server-fallback`)을 켜 두었습니다.
 
 ## 공통 응답 형식
@@ -104,4 +104,4 @@ com.ganzithon.teolhanol
 
 - 이슈 하나당 브랜치 하나: `feat/{이슈번호}-{간단한-설명}` (예: `feat/1-project-setup`)
 - PR 본문에 `Closes #이슈번호`
-- 기능명세서: `docs/털한올_기능명세서.md`
+- 기능명세서: `docs/털한올_기능명세서.md` (2026-11-08, 와이어프레임 v2 기준)

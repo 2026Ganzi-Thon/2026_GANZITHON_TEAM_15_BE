@@ -3,9 +3,7 @@ package com.ganzithon.teolhanol.domain.diary.entity;
 import com.ganzithon.teolhanol.domain.user.entity.User;
 import com.ganzithon.teolhanol.global.entity.BaseTimeEntity;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
-import com.ganzithon.teolhanol.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -25,8 +23,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 감정 일기. 일기 하나가 케어 1회와 기록 양 1마리에 대응합니다 (DRY-01, SHP-02).
- * content는 DB에 암호화해서 저장합니다.
+ * 오늘의 마음. 홈에서 고른 감정 하나와 이어지는 케어 대화 1회에 대응합니다 (DRY-01, CARE-01~03).
+ * 사용자가 한 이야기는 care_messages에 암호화해서 저장합니다.
  */
 @Getter
 @Entity
@@ -49,17 +47,18 @@ public class Diary extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private Emotion emotion;
 
-    /** 감정 강도 1~5 */
-    @Column(nullable = false)
-    private int intensity;
-
-    @Convert(converter = EncryptedStringConverter.class)
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
+    /** 대화 중 사용자 메시지의 위험도 중 가장 높은 등급 */
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_level", nullable = false, length = 10)
     private RiskLevel riskLevel;
+
+    /** 대화에서 위기 신호가 한 번이라도 나왔는지. true면 마무리해도 털을 쌓지 않습니다 (SAF-02). */
+    @Column(name = "crisis_detected", nullable = false)
+    private boolean crisisDetected;
+
+    /** 사용자 메시지 수. 3회 이상이어야 털 한 올을 쌓을 수 있습니다 (CARE-02). */
+    @Column(name = "user_message_count", nullable = false)
+    private int userMessageCount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "care_type", length = 20)
@@ -69,12 +68,10 @@ public class Diary extends BaseTimeEntity {
     @Column(name = "care_status", nullable = false, length = 20)
     private CareStatus careStatus;
 
-    public Diary(User user, Emotion emotion, int intensity, String content, RiskLevel riskLevel) {
+    public Diary(User user, Emotion emotion) {
         this.user = user;
         this.emotion = emotion;
-        this.intensity = intensity;
-        this.content = content;
-        this.riskLevel = riskLevel;
-        this.careStatus = riskLevel.isCrisis() ? CareStatus.STOPPED : CareStatus.NONE;
+        this.riskLevel = RiskLevel.SAFE;
+        this.careStatus = CareStatus.NONE;
     }
 }

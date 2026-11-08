@@ -1,10 +1,6 @@
 [
-  { "code": "CAREER",       "name": "취업·진로",               "description": "어디로 가야 할지 막막할 때, 함께 길을 찾아봐요",        "sortOrder": 1 },
-  { "code": "STUDY",        "name": "학업",                    "description": "공부와 시험, 성적 때문에 마음이 무거울 때",             "sortOrder": 2 },
-  { "code": "LOVE",         "name": "연애",                    "description": "설레고 아프고 복잡한 마음을 털어놓는 곳",               "sortOrder": 3 },
-  { "code": "FAMILY",       "name": "가족",                    "description": "가까워서 더 어려운 가족 이야기",                        "sortOrder": 4 },
-  { "code": "RELATIONSHIP", "name": "친구·인간관계",           "description": "친구, 동료, 사람 사이에서 생긴 고민",                   "sortOrder": 5 },
-  { "code": "BURNOUT",      "name": "직장·번아웃",             "description": "일에 지치고 소진된 마음을 쉬어 가는 곳",                "sortOrder": 6 },
-  { "code": "SELF",         "name": "나 자신(자존감·불안)",    "description": "나를 미워하거나 불안할 때, 나에게 다정해지는 연습",     "sortOrder": 7 },
-  { "code": "ETC",          "name": "그 밖의 고민",            "description": "어디에도 속하지 않는 모든 고민을 환영해요",             "sortOrder": 8 }
+  {"code": "CAREER", "name": "진로·취업", "tabName": "진로", "description": "면접, 진로 선택, 이직처럼 앞길이 막막할 때", "sortOrder": 1},
+  {"code": "RELATIONSHIP", "name": "관계", "tabName": "관계", "description": "가족, 친구, 연애처럼 사람 사이에서 생긴 고민", "sortOrder": 2},
+  {"code": "BURNOUT", "name": "번아웃", "tabName": "번아웃", "description": "일과 공부에 지치고 소진된 마음", "sortOrder": 3},
+  {"code": "SELF", "name": "나 자신", "tabName": "나", "description": "자존감, 불안처럼 나를 향한 고민", "sortOrder": 4}
 ]

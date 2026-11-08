@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CrisisSource {
 
-    DIARY("일기"),
     MESSAGE("케어 대화"),
     WORRY("고민");
 

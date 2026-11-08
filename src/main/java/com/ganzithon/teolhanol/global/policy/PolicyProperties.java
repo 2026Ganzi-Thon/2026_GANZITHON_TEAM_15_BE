@@ -19,16 +19,33 @@ public record PolicyProperties(
         @Valid Safety safety
 ) {
 
-    /** 로그인 잠금: 실패 5회, 5분 */
-    public record Auth(@Positive int maxLoginFailures, @Positive int lockMinutes) {
+    /**
+     * 계정.
+     *
+     * @param maxLoginFailures  로그인 실패 5회 시 잠금
+     * @param lockMinutes       잠금 5분
+     * @param nicknameMinLength 닉네임 최소 2자
+     * @param nicknameMaxLength 닉네임 최대 12자
+     * @param passwordMinLength 비밀번호 최소 8자
+     */
+    public record Auth(@Positive int maxLoginFailures, @Positive int lockMinutes,
+                       @Positive int nicknameMinLength, @Positive int nicknameMaxLength,
+                       @Positive int passwordMinLength) {
     }
 
-    /** 일기 길이 1~1000자, 하루 최대 3회 */
-    public record Diary(@Positive int maxLength, @Positive int dailyLimit) {
+    /** 하루 대화 시작(오늘의 마음) 최대 3회 */
+    public record Diary(@Positive int dailyLimit) {
     }
 
-    /** 사용자 메시지 최대 10회, AI 응답 300자 이내 권장 */
-    public record Care(@Positive int maxUserMessages, @Positive int aiResponseMaxLength) {
+    /**
+     * 케어 대화.
+     *
+     * @param minUserMessagesForWool 털 한 올을 쌓을 수 있는 사용자 메시지 수 (3회)
+     * @param maxUserMessages        사용자 메시지 최대 10회
+     * @param aiResponseMaxLength    AI 응답 300자 이내 권장
+     */
+    public record Care(@Positive int minUserMessagesForWool, @Positive int maxUserMessages,
+                       @Positive int aiResponseMaxLength) {
     }
 
     /**

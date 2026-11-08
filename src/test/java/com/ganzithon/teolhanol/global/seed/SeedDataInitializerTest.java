@@ -24,14 +24,15 @@ class SeedDataInitializerTest {
     @Autowired PolicyProperties policy;
 
     @Test
-    void 서버가_뜨면_고정_목장_8개가_순서대로_들어가_있다() {
+    void 서버가_뜨면_고정_목장_4곳이_순서대로_들어가_있다() {
         List<String> names = farmRepository.findAll().stream()
                 .sorted(Comparator.comparingInt(Farm::getSortOrder))
                 .map(Farm::getName)
                 .toList();
 
-        assertThat(names).containsExactly("취업·진로", "학업", "연애", "가족", "친구·인간관계",
-                "직장·번아웃", "나 자신(자존감·불안)", "그 밖의 고민");
+        assertThat(names).containsExactly("진로·취업", "관계", "번아웃", "나 자신");
+        assertThat(farmRepository.findAll()).extracting(Farm::getTabName)
+                .containsExactlyInAnyOrder("진로", "관계", "번아웃", "나");
     }
 
     @Test
@@ -40,7 +41,7 @@ class SeedDataInitializerTest {
 
         assertThat(initializer.seedFarms()).isZero();
         assertThat(initializer.seedSafetyPatterns()).isZero();
-        assertThat(farmRepository.count()).isEqualTo(8);
+        assertThat(farmRepository.count()).isEqualTo(4);
         assertThat(safetyPatternRepository.count()).isEqualTo(patterns);
     }
 
@@ -70,9 +71,12 @@ class SeedDataInitializerTest {
 
     @Test
     void 정책_수치가_설정_파일에서_읽힌다() {
-        assertThat(policy.diary().maxLength()).isEqualTo(1000);
         assertThat(policy.diary().dailyLimit()).isEqualTo(3);
+        assertThat(policy.care().minUserMessagesForWool()).isEqualTo(3);
         assertThat(policy.care().maxUserMessages()).isEqualTo(10);
+        assertThat(policy.auth().nicknameMinLength()).isEqualTo(2);
+        assertThat(policy.auth().nicknameMaxLength()).isEqualTo(12);
+        assertThat(policy.auth().passwordMinLength()).isEqualTo(8);
         assertThat(policy.worry().woolCap()).isEqualTo(10);
         assertThat(policy.worry().pageSize()).isEqualTo(20);
         assertThat(policy.worry().protectedViewMinSentWools()).isEqualTo(5);

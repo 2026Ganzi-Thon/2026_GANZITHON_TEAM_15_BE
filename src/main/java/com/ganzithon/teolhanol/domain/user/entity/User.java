@@ -21,7 +21,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 회원. 이메일·전화번호·실명은 수집하지 않습니다 (ACC-01).
+ * 회원. 이메일은 로그인에만 쓰고, 전화번호·실명은 수집하지 않습니다 (ACC-01).
  * 로그인 잠금(ACC-02)과 위기 배너(SAF-02)를 위한 컬럼을 명세서 테이블에 추가했습니다.
  */
 @Getter
@@ -34,8 +34,9 @@ public class User extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "login_id", nullable = false, unique = true, length = 30)
-    private String loginId;
+    /** 로그인용 이메일. 다른 사용자에게는 노출하지 않습니다. */
+    @Column(nullable = false, unique = true, length = 255)
+    private String email;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
@@ -46,10 +47,6 @@ public class User extends BaseTimeEntity {
     /** 털실: 조언을 보내면 +1, 나의 양 꾸미기에 사용 */
     @Column(name = "yarn_count", nullable = false)
     private int yarnCount;
-
-    /** 반짝이는 털실: 고마워요 답례를 받으면 +1 */
-    @Column(name = "shiny_yarn_count", nullable = false)
-    private int shinyYarnCount;
 
     /** 보낸 조언 수: '주의' 고민 양 노출 기준(5회 이상)에 사용 */
     @Column(name = "sent_wool_count", nullable = false)
@@ -65,8 +62,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "crisis_banner_until")
     private LocalDateTime crisisBannerUntil;
 
-    public User(String loginId, String passwordHash, String nickname) {
-        this.loginId = loginId;
+    public User(String email, String passwordHash, String nickname) {
+        this.email = email;
         this.passwordHash = passwordHash;
         this.nickname = nickname;
     }
