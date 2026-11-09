@@ -39,7 +39,7 @@ docker compose up -d
 | --- | --- | --- |
 | `local` (기본) | 로컬 개발 | Docker MySQL, `ddl-auto: update` |
 | `test` | 자동 테스트 | H2 (MySQL 모드), `create-drop` |
-| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `ANTHROPIC_API_KEY`, `ddl-auto: validate` |
+| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `APP_JWT_SECRET`, `ANTHROPIC_API_KEY`, `ddl-auto: validate` |
 
 ## 패키지 구조
 
@@ -60,6 +60,14 @@ com.ganzithon.teolhanol
 - 로컬·테스트: 설정 파일의 개발용 키를 사용
 - 운영: `APP_CRYPTO_KEY` 환경변수 필수 (`openssl rand -base64 32`로 생성). 키를 잃어버리면 기존 데이터를 복호화할 수 없으니 안전하게 보관하세요.
 - 대화 본문은 로그에도 남기지 않습니다.
+
+## 인증 (JWT)
+
+- `POST /auth/login`, `POST /auth/signup` 응답의 `accessToken`을 `Authorization: Bearer {토큰}` 헤더로 보냅니다. 공개 경로(`SecurityConfig.PUBLIC_PATHS`) 외에는 토큰이 없으면 401입니다.
+- 현재 사용자 id: 컨트롤러 인자에 `@AuthenticationPrincipal AuthUser user` → `user.id()`.
+- 로그아웃은 서버에 상태가 없으므로 클라이언트가 토큰을 지웁니다. 연속 5번 실패하면 5분 잠깁니다(423 `ACCOUNT_LOCKED`).
+- 테스트에서 로그인 사용자가 필요하면 `@Import(TestUsers.class)` 후 `testUsers.signIn(email, nickname)` → `login.bearer()` (`src/test/.../support/TestUsers.java`).
+- 로컬은 개발용 키를 쓰고, 운영은 `APP_JWT_SECRET` 필수 (`openssl rand -base64 48`).
 
 ## 시드 데이터와 정책 수치
 

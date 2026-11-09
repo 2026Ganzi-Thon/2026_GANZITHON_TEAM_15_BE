@@ -3,6 +3,8 @@ package com.ganzithon.teolhanol.global.config;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
 import com.ganzithon.teolhanol.global.response.ApiResponse;
 import java.util.List;
+import com.ganzithon.teolhanol.global.security.JwtAuthenticationFilter;
+import com.ganzithon.teolhanol.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -14,13 +16,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 보안 기본 설정. JWT 인증 필터는 ACC-02(#7)에서 추가합니다.
+ * 보안 설정. 공개 경로를 뺀 모든 API는 Bearer JWT가 필요합니다 (ACC-02).
  */
 @Configuration
 @RequiredArgsConstructor
@@ -40,6 +43,7 @@ public class SecurityConfig {
 
     private final CorsProperties corsProperties;
     private final ObjectMapper objectMapper;
+    private final JwtProvider jwtProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,6 +56,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .anyRequest().authenticated())
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((req, res, ex) -> writeError(res, ErrorCode.UNAUTHORIZED))
                         .accessDeniedHandler((req, res, ex) -> writeError(res, ErrorCode.FORBIDDEN)));

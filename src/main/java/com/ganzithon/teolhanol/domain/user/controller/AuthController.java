@@ -1,5 +1,7 @@
 package com.ganzithon.teolhanol.domain.user.controller;
 
+import com.ganzithon.teolhanol.domain.user.dto.LoginRequest;
+import com.ganzithon.teolhanol.domain.user.dto.LoginResponse;
 import com.ganzithon.teolhanol.domain.user.dto.NicknameAvailabilityResponse;
 import com.ganzithon.teolhanol.domain.user.dto.SignupRequest;
 import com.ganzithon.teolhanol.domain.user.dto.SignupResponse;
@@ -40,5 +42,20 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ApiResponse.ok(authService.signup(request));
+    }
+
+    @Operation(summary = "로그인 (ACC-02)",
+            description = "이메일·비밀번호로 로그인하고 액세스 토큰(JWT)을 받습니다. 이후 요청은 Authorization: Bearer {토큰}. "
+                    + "5회 연속 실패하면 5분간 잠기며(423 ACCOUNT_LOCKED) 남은 시간을 안내합니다.")
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ApiResponse.ok(authService.login(request));
+    }
+
+    @Operation(summary = "로그아웃 (ACC-02)",
+            description = "토큰은 서버에 저장하지 않으므로 클라이언트가 저장한 토큰을 지우면 로그아웃됩니다. 이 API는 화면 흐름을 맞추기 위한 확인용입니다.")
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout() {
+        return ApiResponse.ok();
     }
 }

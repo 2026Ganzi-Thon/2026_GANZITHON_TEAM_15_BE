@@ -67,4 +67,33 @@ public class User extends BaseTimeEntity {
         this.passwordHash = passwordHash;
         this.nickname = nickname;
     }
+
+    public boolean isLocked(LocalDateTime now) {
+        return lockedUntil != null && lockedUntil.isAfter(now);
+    }
+
+    /**
+     * 로그인 실패를 기록합니다. 이전 잠금이 풀렸다면 처음부터 다시 세고,
+     * 최대 횟수에 닿으면 잠그면서 횟수를 0으로 되돌립니다(잠금이 풀리면 다시 5번 시도 가능).
+     *
+     * @return 이번 실패로 잠겼다면 해제 시각, 아니면 null
+     */
+    public LocalDateTime recordLoginFailure(LocalDateTime now, int maxFailures, int lockMinutes) {
+        if (lockedUntil != null && !lockedUntil.isAfter(now)) {
+            lockedUntil = null;
+            loginFailCount = 0;
+        }
+        loginFailCount++;
+        if (loginFailCount >= maxFailures) {
+            lockedUntil = now.plusMinutes(lockMinutes);
+            loginFailCount = 0;
+            return lockedUntil;
+        }
+        return null;
+    }
+
+    public void clearLoginFailures() {
+        loginFailCount = 0;
+        lockedUntil = null;
+    }
 }

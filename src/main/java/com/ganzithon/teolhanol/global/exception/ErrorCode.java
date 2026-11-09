@@ -25,7 +25,9 @@ public enum ErrorCode {
     // 계정 (A)
     EMAIL_DUPLICATED(HttpStatus.CONFLICT, "ACCOUNT_EMAIL_DUPLICATED", "이미 가입한 이메일이에요. 로그인해 주세요."),
     NICKNAME_UNAVAILABLE(HttpStatus.CONFLICT, "ACCOUNT_NICKNAME_UNAVAILABLE", "이 이름은 쓸 수 없어요. 다른 이름을 골라 주세요."),
-    PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "ACCOUNT_PASSWORD_TOO_SHORT", "비밀번호는 8자 이상으로 정해 주세요.");
+    PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "ACCOUNT_PASSWORD_TOO_SHORT", "비밀번호는 8자 이상으로 정해 주세요."),
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ACCOUNT_LOGIN_FAILED", "이메일이나 비밀번호를 한 번 더 확인해 주세요."),
+    ACCOUNT_LOCKED(HttpStatus.LOCKED, "ACCOUNT_LOCKED", "잠시 쉬어 갈게요. 잠시 뒤에 다시 로그인해 주세요.");
 
     private final HttpStatus status;
     private final String code;

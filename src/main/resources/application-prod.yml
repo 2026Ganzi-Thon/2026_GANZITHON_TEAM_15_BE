@@ -17,3 +17,6 @@ app:
   crypto:
     # 필수. 생성: openssl rand -base64 32
     key: ${APP_CRYPTO_KEY}
+  jwt:
+    # 필수. 생성: openssl rand -base64 48
+    secret: ${APP_JWT_SECRET}

@@ -13,3 +13,5 @@ app:
     allowed-origins: http://localhost:3000
   crypto:
     key: P4qetJl4vwR1gXmf/WHFEMuQM/huAanu+kFjgm6D0Yw=
+  jwt:
+    secret: test-only-jwt-secret-for-unit-tests-0123456789

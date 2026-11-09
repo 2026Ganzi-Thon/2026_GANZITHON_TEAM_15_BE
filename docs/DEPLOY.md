@@ -30,6 +30,7 @@ EC2 배포 단계는 저장소 변수 `DEPLOY_ENABLED`가 `true`일 때만 실�
    ```
 
    `APP_CRYPTO_KEY`는 `openssl rand -base64 32`로 만들고 따로 안전하게 보관하세요. 키가 바뀌면 기존 일기를 읽을 수 없습니다.
+   `APP_JWT_SECRET`은 `openssl rand -base64 48`로 만드세요(32바이트 이상). 바뀌면 로그인한 사용자가 모두 로그아웃됩니다.
 
 ## 2. GitHub 설정
 
