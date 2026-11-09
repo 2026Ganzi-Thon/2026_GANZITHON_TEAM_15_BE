@@ -56,7 +56,9 @@ public class CareCompleteService {
         if (check.isDone()) {
             return check.result();
         }
-        String card = guard.guard(buildCard(diaryId, check.careType(), check.emotionLabel()));
+        String built = buildCard(diaryId, check.careType(), check.emotionLabel());
+        // 금지 패턴이 걸린 카드는 대화용 안전 문장 대신 방식별 고정 카드로 바꿉니다
+        String card = guard.guard(guard.violates(built) ? FALLBACK_CARDS.get(check.careType()) : built);
         return completer.complete(userId, diaryId, card);
     }
 

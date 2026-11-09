@@ -90,17 +90,17 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 | 이벤트 | 데이터 | 설명 |
 | --- | --- | --- |
 | `progress` | `{userMessageCount, ready, maxUserMessages, limitReached}` | 항상 처음. 3회부터 `ready=true`, 10회에 닿으면 `limitReached=true`(AI가 마무리를 제안) |
-| `delta` | `{text}` | AI 응답 조각 |
+| `delta` | `{text}` | AI 응답 조각. 안전 가드(SAF-03)가 문장 단위로 먼저 검사하므로 문장이 끝날 때마다 한 덩어리씩 도착 |
 | `crisis` | `{message, actions:["call","continue"]}` | 위기로 판정되면 AI 응답 대신 전환 메시지. 대화는 계속 보낼 수 있고, 이어서 말하면 AI가 "말해 줘서 고마워요…"로 시작 |
 | `notice` | `{message}` | 응답이 늦어 다시 시도하는 중("잠시 숨을 고르고 있어요"). 최대 3번 시도 |
 | `reset` | `{}` | 지금까지 받은 `delta`를 지우고 처음부터 다시 받기 |
-| `replace` | `{text}` | 안전 가드(SAF-03)가 응답을 바꿈. 말풍선을 이 문장으로 교체 |
+| `replace` | `{text}` | 앞서 일부 문장이 나간 뒤 다음 문장이 금지 패턴에 걸려 응답 전체를 안전 문장으로 바꿈. 말풍선을 이 문장으로 교체. 첫 문장부터 걸리면 `replace` 없이 안전 문장이 `delta`로 옴 |
 | `error` | `{code, message}` | 3번 실패. 사용자가 한 말은 저장되어 있어 다시 보내면 이어서 대화 |
 | `done` | `{}` | 끝 |
 
 - 검증 오류(404 남의 기록 / 409 마무리했거나 10회 초과 / 400 빈 내용·1000자 초과)는 SSE 대신 일반 JSON 오류입니다.
 - 케어 방식을 고르지 않고 바로 보내면 '이야기 들어주기'로 시작합니다.
-- AI 응답 안전 가드(`AiResponseGuard`)는 #32에서 구현합니다. 그때까지는 그대로 통과시킵니다.
+- AI 응답 안전 가드(`AiResponseGuard`, SAF-03): 병명 단정, 약 복용·중단 조언, 자해 방법, 의존 유도 같은 `safety_patterns`(category `AI_OUTPUT`) 부분 일치(띄어쓰기 무시)에 걸린 문장은 화면에 내보내지 않고 준비한 안전 문장으로 바꿔 저장합니다. 케어 첫 마디와 마무리 카드에도 적용됩니다(걸리면 방식별 고정 문장·카드). 패턴은 시드 JSON(`seed/safety-patterns.json`)에 추가하면 서버 시작 때 반영되고 1분간 캐시됩니다.
 
 ## 케어 마무리 (CARE-03)
 
