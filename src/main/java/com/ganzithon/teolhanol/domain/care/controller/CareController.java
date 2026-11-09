@@ -2,8 +2,10 @@ package com.ganzithon.teolhanol.domain.care.controller;
 
 import com.ganzithon.teolhanol.domain.care.dto.CareStartRequest;
 import com.ganzithon.teolhanol.domain.care.dto.CareStartResponse;
+import com.ganzithon.teolhanol.domain.care.dto.CareCompleteResponse;
 import com.ganzithon.teolhanol.domain.care.dto.CareMessageRequest;
 import com.ganzithon.teolhanol.domain.care.service.CareChatService;
+import com.ganzithon.teolhanol.domain.care.service.CareCompleteService;
 import com.ganzithon.teolhanol.domain.care.service.CareService;
 import com.ganzithon.teolhanol.global.response.ApiResponse;
 import com.ganzithon.teolhanol.global.security.AuthUser;
@@ -29,6 +31,7 @@ public class CareController {
 
     private final CareService careService;
     private final CareChatService careChatService;
+    private final CareCompleteService careCompleteService;
 
     @Operation(summary = "케어 대화 보내기 (CARE-02, SAF-01, SAF-02)",
             description = """
@@ -44,6 +47,15 @@ public class CareController {
     public SseEmitter send(@AuthenticationPrincipal AuthUser user, @PathVariable Long diaryId,
                            @Valid @RequestBody CareMessageRequest request) {
         return careChatService.send(user.id(), diaryId, request);
+    }
+
+    @Operation(summary = "털 한 올 쌓고 마무리 (CARE-03, SHP-01)",
+            description = "대화를 바탕으로 케어 방식별 '오늘 받은 말' 카드를 만들고 나의 양 털을 +1 합니다. "
+                    + "사용자 메시지가 3회 미만이면 409입니다. 위기 신호가 나온 대화는 카드만 남기고 added=0이며, "
+                    + "이미 마무리한 기록을 다시 보내도 털은 오르지 않고 저장된 카드를 돌려줍니다.")
+    @PostMapping("/complete")
+    public ApiResponse<CareCompleteResponse> complete(@AuthenticationPrincipal AuthUser user, @PathVariable Long diaryId) {
+        return ApiResponse.ok(careCompleteService.complete(user.id(), diaryId));
     }
 
     @Operation(summary = "케어 방식 고르기 (CARE-01)",
