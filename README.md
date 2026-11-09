@@ -83,6 +83,25 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - 결과는 `crisis_logs`에 기록하고(본문 제외), 위기면 `users.crisis_banner_until`을 24시간 뒤로 켭니다.
 - 프롬프트는 `prompts/risk-classification.txt`. 테스트에서는 `@MockitoBean LlmClient`로 판정을 정해 둘 수 있습니다.
 
+## 케어 대화 SSE (CARE-02)
+
+`POST /diaries/{id}/care/messages` `{ "content": "..." }` → `text/event-stream`. 프론트는 `EventSource`가 아니라 헤더를 보낼 수 있는 `fetch` 스트림으로 읽습니다.
+
+| 이벤트 | 데이터 | 설명 |
+| --- | --- | --- |
+| `progress` | `{userMessageCount, ready, maxUserMessages, limitReached}` | 항상 처음. 3회부터 `ready=true`, 10회에 닿으면 `limitReached=true`(AI가 마무리를 제안) |
+| `delta` | `{text}` | AI 응답 조각 |
+| `crisis` | `{message, actions:["call","continue"]}` | 위기로 판정되면 AI 응답 대신 전환 메시지. 대화는 계속 보낼 수 있고, 이어서 말하면 AI가 "말해 줘서 고마워요…"로 시작 |
+| `notice` | `{message}` | 응답이 늦어 다시 시도하는 중("잠시 숨을 고르고 있어요"). 최대 3번 시도 |
+| `reset` | `{}` | 지금까지 받은 `delta`를 지우고 처음부터 다시 받기 |
+| `replace` | `{text}` | 안전 가드(SAF-03)가 응답을 바꿈. 말풍선을 이 문장으로 교체 |
+| `error` | `{code, message}` | 3번 실패. 사용자가 한 말은 저장되어 있어 다시 보내면 이어서 대화 |
+| `done` | `{}` | 끝 |
+
+- 검증 오류(404 남의 기록 / 409 마무리했거나 10회 초과 / 400 빈 내용·1000자 초과)는 SSE 대신 일반 JSON 오류입니다.
+- 케어 방식을 고르지 않고 바로 보내면 '이야기 들어주기'로 시작합니다.
+- AI 응답 안전 가드(`AiResponseGuard`)는 #32에서 구현합니다. 그때까지는 그대로 통과시킵니다.
+
 ## 시드 데이터와 정책 수치
 
 - 서버가 시작될 때 `src/main/resources/seed/`의 목장 4곳과 안전 패턴(위기 키워드, 금칙어, AI 응답 금지 패턴, 개인정보 정규식)을 넣습니다. 이미 있는 데이터는 건너뜁니다.

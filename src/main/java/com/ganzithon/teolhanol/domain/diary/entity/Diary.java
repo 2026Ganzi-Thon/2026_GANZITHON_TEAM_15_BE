@@ -75,6 +75,19 @@ public class Diary extends BaseTimeEntity {
         this.careStatus = CareStatus.NONE;
     }
 
+    /** 사용자 메시지를 하나 받았습니다. 새 메시지 수를 돌려줍니다. */
+    public int addUserMessage() {
+        return ++userMessageCount;
+    }
+
+    /** 사용자 메시지의 위험도를 반영합니다. 대화 중 가장 높은 등급을 유지하고, 위기가 한 번이라도 나오면 표시합니다. */
+    public void applyRisk(RiskLevel level) {
+        this.riskLevel = RiskLevel.max(this.riskLevel, level);
+        if (level.isCrisis()) {
+            this.crisisDetected = true;
+        }
+    }
+
     public boolean isCareStarted() {
         return careStatus != CareStatus.NONE;
     }
