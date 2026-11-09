@@ -7,8 +7,11 @@ import com.ganzithon.teolhanol.domain.care.repository.CareMessageRepository;
 import com.ganzithon.teolhanol.domain.care.repository.CareSummaryRepository;
 import com.ganzithon.teolhanol.domain.diary.dto.DiaryDetailResponse;
 import com.ganzithon.teolhanol.domain.diary.dto.DiaryListResponse;
+import com.ganzithon.teolhanol.domain.diary.dto.DiaryMonthSummaryResponse;
 import com.ganzithon.teolhanol.domain.diary.entity.CareStatus;
+import com.ganzithon.teolhanol.domain.diary.entity.CareType;
 import com.ganzithon.teolhanol.domain.diary.entity.Diary;
+import com.ganzithon.teolhanol.domain.diary.entity.Emotion;
 import com.ganzithon.teolhanol.domain.diary.repository.DiaryRepository;
 import com.ganzithon.teolhanol.global.exception.BusinessException;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DiaryRecordService {
 
     private static final int SUMMARY_LINE_MAX = 60;
+    private static final int MIN_FOR_SENTENCE = 3;
 
     private final DiaryRepository diaryRepository;
     private final CareMessageRepository careMessageRepository;
@@ -60,6 +64,34 @@ public class DiaryRecordService {
                 .toList();
         return new DiaryListResponse(target.toString(), days.values().stream()
                 .sorted(java.util.Comparator.comparing(DiaryListResponse.Day::date)).toList(), items);
+    }
+
+    /**
+     * 그 달에 마무리해 털을 받은 마음(위기 신호가 없었던 것)을 집계합니다.
+     * 3개 이상이면 가장 자주 나온 '감정 × 케어 방식' 조합을 한 문장으로 만듭니다. 같은 횟수면 더 최근에 고른 쪽입니다.
+     */
+    @Transactional(readOnly = true)
+    public DiaryMonthSummaryResponse monthSummary(Long userId, String month) {
+        YearMonth target = parseMonth(month);
+        List<Diary> earned = diaryRepository
+                .findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(
+                        userId, target.atDay(1).atStartOfDay(), target.plusMonths(1).atDay(1).atStartOfDay())
+                .stream()
+                .filter(d -> d.getCareStatus() == CareStatus.COMPLETED && !d.isCrisisDetected() && d.getCareType() != null)
+                .toList();
+
+        String sentence = null;
+        if (earned.size() >= MIN_FOR_SENTENCE) {
+            // 최신순으로 훑으며 처음 만난 순서를 유지해, 횟수가 같으면 더 최근 조합이 앞선다
+            Map<List<Object>, Integer> counts = new LinkedHashMap<>();
+            for (Diary d : earned) {
+                counts.merge(List.of(d.getEmotion(), d.getCareType()), 1, Integer::sum);
+            }
+            List<Object> top = counts.entrySet().stream()
+                    .max(java.util.Map.Entry.comparingByValue()).orElseThrow().getKey();
+            sentence = ReviewPhrases.sentence((Emotion) top.get(0), (CareType) top.get(1));
+        }
+        return new DiaryMonthSummaryResponse(target.toString(), earned.size(), sentence);
     }
 
     @Transactional(readOnly = true)

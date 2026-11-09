@@ -4,6 +4,7 @@ import com.ganzithon.teolhanol.domain.diary.dto.DiaryCreateRequest;
 import com.ganzithon.teolhanol.domain.diary.dto.DiaryCreateResponse;
 import com.ganzithon.teolhanol.domain.diary.dto.DiaryDetailResponse;
 import com.ganzithon.teolhanol.domain.diary.dto.DiaryListResponse;
+import com.ganzithon.teolhanol.domain.diary.dto.DiaryMonthSummaryResponse;
 import com.ganzithon.teolhanol.domain.diary.service.DiaryRecordService;
 import com.ganzithon.teolhanol.domain.diary.service.DiaryService;
 import com.ganzithon.teolhanol.global.response.ApiResponse;
@@ -49,6 +50,15 @@ public class DiaryController {
     public ApiResponse<DiaryListResponse> list(@AuthenticationPrincipal AuthUser user,
                                                @RequestParam(required = false) String month) {
         return ApiResponse.ok(diaryRecordService.list(user.id(), month));
+    }
+
+    @Operation(summary = "이번 달 한 줄 돌아보기 (REV-02)",
+            description = "month=yyyy-MM(비우면 이번 달). woolCount는 그 달에 털을 받은 마음의 수, sentence는 가장 자주 고른 "
+                    + "'감정 × 케어 방식' 조합 한 문장입니다(예: 불안한 날엔 위로받기를 자주 골랐어요). 3개 미만이면 sentence는 null입니다.")
+    @GetMapping("/summary")
+    public ApiResponse<DiaryMonthSummaryResponse> monthSummary(@AuthenticationPrincipal AuthUser user,
+                                                               @RequestParam(required = false) String month) {
+        return ApiResponse.ok(diaryRecordService.monthSummary(user.id(), month));
     }
 
     @Operation(summary = "기록 상세 (DRY-02 REC-02)",
