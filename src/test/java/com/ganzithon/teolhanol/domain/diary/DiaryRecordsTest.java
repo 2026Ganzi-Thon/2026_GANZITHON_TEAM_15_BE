@@ -29,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -45,7 +47,8 @@ class DiaryRecordsTest {
     @Autowired CareSummaryRepository careSummaryRepository;
     @Autowired MySheepRepository mySheepRepository;
     @Autowired UserRepository userRepository;
-    @Autowired JdbcTemplate jdbc;
+    @PersistenceContext EntityManager em;
+    @Autowired TransactionTemplate tx;
 
     TestUsers.Login me;
 
@@ -67,7 +70,9 @@ class DiaryRecordsTest {
     /** 지정한 시각에 만든 기록 */
     private Diary diary(TestUsers.Login owner, Emotion emotion, LocalDateTime at) {
         Diary d = diaryRepository.saveAndFlush(new Diary(userRepository.findById(owner.userId()).orElseThrow(), emotion));
-        jdbc.update("update diaries set created_at = ? where id = ?", at, d.getId());
+        // JDBC로 직접 넣으면 JVM 시간대(CI는 UTC)와 앱의 Asia/Seoul 설정이 어긋나므로 Hibernate 경로로 넣는다
+        tx.executeWithoutResult(s -> em.createNativeQuery("update diaries set created_at = :at where id = :id")
+                .setParameter("at", at).setParameter("id", d.getId()).executeUpdate());
         return d;
     }
 
