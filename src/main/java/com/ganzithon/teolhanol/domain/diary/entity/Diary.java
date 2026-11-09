@@ -88,6 +88,11 @@ public class Diary extends BaseTimeEntity {
         }
     }
 
+    /** 케어를 마무리합니다 (CARE-03). */
+    public void completeCare() {
+        this.careStatus = CareStatus.COMPLETED;
+    }
+
     public boolean isCareStarted() {
         return careStatus != CareStatus.NONE;
     }
