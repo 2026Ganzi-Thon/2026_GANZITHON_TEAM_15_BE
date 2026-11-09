@@ -34,7 +34,10 @@ public class RiskClassifier {
     static final String REASON_KEYWORD = "KEYWORD";
     static final String REASON_LLM_FAILED = "LLM_FAILED";
     static final String REASON_UNSPECIFIED = "UNSPECIFIED";
-    private static final int MAX_REASON_LENGTH = 50;
+    /** 분류 프롬프트(risk-classification.txt)가 허용하는 사유 코드. 모델이 오타를 내거나 지어내면 UNSPECIFIED로 기록합니다. */
+    private static final java.util.Set<String> REASON_CODES = java.util.Set.of(
+            "NONE", "SUICIDAL_IDEATION", "SELF_HARM", "SUICIDE_PLAN", "HOPELESSNESS",
+            "WISH_TO_DISAPPEAR", "ABUSE_OR_VIOLENCE", "SEVERE_DISTRESS");
 
     /** LLM이 돌려주는 JSON. level: safe / caution / crisis */
     record LlmVerdict(String level, String reasonCode) {
@@ -117,11 +120,8 @@ public class RiskClassifier {
         if (llmLevel == null) {
             return keywordHit ? REASON_KEYWORD : REASON_LLM_FAILED;
         }
-        String cleaned = llmReason == null ? "" : llmReason.strip().toUpperCase(Locale.ROOT).replaceAll("[^A-Z_]", "");
-        if (cleaned.length() > MAX_REASON_LENGTH) {
-            cleaned = cleaned.substring(0, MAX_REASON_LENGTH);
-        }
-        if (cleaned.isEmpty()) {
+        String cleaned = llmReason == null ? "" : llmReason.strip().toUpperCase(Locale.ROOT);
+        if (!REASON_CODES.contains(cleaned)) {
             cleaned = REASON_UNSPECIFIED;
         }
         // LLM은 안전이라 했지만 키워드가 걸린 경우, 사유는 키워드로 남긴다

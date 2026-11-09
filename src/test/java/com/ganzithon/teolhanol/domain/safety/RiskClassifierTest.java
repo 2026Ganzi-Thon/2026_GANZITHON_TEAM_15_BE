@@ -163,7 +163,7 @@ class RiskClassifierTest {
 
     @Test
     void 판정은_crisis_logs에_남고_본문은_저장되지_않는다() {
-        llmReturns("caution", "hopelessness!! with weird chars 한글");
+        llmReturns("caution", " hopelessness ");
 
         riskClassifier.classify("비밀스러운 본문 내용", CrisisSource.WORRY, user);
 
@@ -171,7 +171,7 @@ class RiskClassifierTest {
         assertThat(log.getSource()).isEqualTo(CrisisSource.WORRY);
         assertThat(log.isKeywordHit()).isFalse();
         assertThat(log.getLlmLevel()).isEqualTo(RiskLevel.CAUTION);
-        assertThat(log.getReasonCode()).isEqualTo("HOPELESSNESSWITHWEIRDCHARS");
+        assertThat(log.getReasonCode()).isEqualTo("HOPELESSNESS");
         assertThat(log.getUser().getId()).isEqualTo(user.getId());
     }
 
@@ -186,5 +186,25 @@ class RiskClassifierTest {
         assertThat(captor.getValue().systemPrompt()).contains("안전 분류기");
         assertThat(captor.getValue().messages().get(0).content()).isEqualTo("오늘 하루 어땠냐면요");
         assertThat(captor.getValue().retry()).isFalse();
+    }
+
+    @Test
+    void 허용되지_않은_사유_코드는_UNSPECIFIED로_기록한다() {
+        llmReturns("caution", "SUICIDAL_IDEAITION");
+
+        RiskResult result = riskClassifier.classify("마음이 무거워요", CrisisSource.MESSAGE, user);
+
+        assertThat(result.reasonCode()).isEqualTo("UNSPECIFIED");
+        assertThat(crisisLogRepository.findAll().get(0).getReasonCode()).isEqualTo("UNSPECIFIED");
+    }
+
+    @Test
+    void 방법을_찾는_표현은_LLM이_안전이라_해도_키워드로_위기() {
+        llmReturns("safe", "NONE");
+
+        assertThat(riskClassifier.classify("조용히 사라지는 방법을 찾아보고 있어요", CrisisSource.MESSAGE, user).level())
+                .isEqualTo(RiskLevel.CRISIS);
+        assertThat(riskClassifier.classify("죽는 방법을 검색했어요", CrisisSource.WORRY, user).level())
+                .isEqualTo(RiskLevel.CRISIS);
     }
 }
