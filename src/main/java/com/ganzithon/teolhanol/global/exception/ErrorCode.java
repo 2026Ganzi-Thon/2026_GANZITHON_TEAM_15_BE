@@ -20,7 +20,12 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON_405", "지원하지 않는 요청이에요."),
     CONFLICT(HttpStatus.CONFLICT, "COMMON_409", "이미 처리된 요청이에요."),
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "COMMON_429", "오늘은 충분히 이야기해 주셨어요. 내일 다시 들려주세요."),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "잠시 문제가 생겼어요. 조금 뒤에 다시 시도해 주세요.");
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "잠시 문제가 생겼어요. 조금 뒤에 다시 시도해 주세요."),
+
+    // 계정 (A)
+    EMAIL_DUPLICATED(HttpStatus.CONFLICT, "ACCOUNT_EMAIL_DUPLICATED", "이미 가입한 이메일이에요. 로그인해 주세요."),
+    NICKNAME_UNAVAILABLE(HttpStatus.CONFLICT, "ACCOUNT_NICKNAME_UNAVAILABLE", "이 이름은 쓸 수 없어요. 다른 이름을 골라 주세요."),
+    PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "ACCOUNT_PASSWORD_TOO_SHORT", "비밀번호는 8자 이상으로 정해 주세요.");
 
     private final HttpStatus status;
     private final String code;

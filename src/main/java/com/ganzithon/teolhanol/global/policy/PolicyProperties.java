@@ -1,6 +1,7 @@
 package com.ganzithon.teolhanol.global.policy;
 
 import jakarta.validation.Valid;
+import java.util.List;
 import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -27,10 +28,15 @@ public record PolicyProperties(
      * @param nicknameMinLength 닉네임 최소 2자
      * @param nicknameMaxLength 닉네임 최대 12자
      * @param passwordMinLength 비밀번호 최소 8자
+     * @param reservedNicknameWords 닉네임에 쓸 수 없는 사칭 단어 (띄어쓰기·대소문자 무시)
      */
     public record Auth(@Positive int maxLoginFailures, @Positive int lockMinutes,
                        @Positive int nicknameMinLength, @Positive int nicknameMaxLength,
-                       @Positive int passwordMinLength) {
+                       @Positive int passwordMinLength, List<String> reservedNicknameWords) {
+
+        public Auth {
+            reservedNicknameWords = reservedNicknameWords == null ? List.of() : List.copyOf(reservedNicknameWords);
+        }
     }
 
     /** 하루 대화 시작(오늘의 마음) 최대 3회 */
