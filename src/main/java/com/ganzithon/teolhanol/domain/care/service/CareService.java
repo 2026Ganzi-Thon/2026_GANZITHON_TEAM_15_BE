@@ -4,6 +4,7 @@ import com.ganzithon.teolhanol.domain.care.dto.CareStartRequest;
 import com.ganzithon.teolhanol.domain.care.dto.CareStartResponse;
 import com.ganzithon.teolhanol.domain.diary.entity.CareType;
 import com.ganzithon.teolhanol.domain.diary.entity.Emotion;
+import com.ganzithon.teolhanol.domain.safety.service.AiResponseGuard;
 import com.ganzithon.teolhanol.global.llm.LlmClient;
 import com.ganzithon.teolhanol.global.llm.LlmException;
 import com.ganzithon.teolhanol.global.llm.LlmMessage;
@@ -24,13 +25,15 @@ public class CareService {
     private final LlmClient llmClient;
     private final PromptLoader promptLoader;
     private final LlmProperties llmProperties;
+    private final AiResponseGuard guard;
 
     public CareService(CareStarter careStarter, LlmClient llmClient, PromptLoader promptLoader,
-                       LlmProperties llmProperties) {
+                       LlmProperties llmProperties, AiResponseGuard guard) {
         this.careStarter = careStarter;
         this.llmClient = llmClient;
         this.promptLoader = promptLoader;
         this.llmProperties = llmProperties;
+        this.guard = guard;
     }
 
     /**
@@ -54,7 +57,7 @@ public class CareService {
             String user = "오늘 고른 감정: %s\n케어 방식: %s".formatted(emotion.getLabel(), careType.getLabel());
             String text = llmClient.complete(LlmRequest.chat(system, List.of(LlmMessage.user(user)),
                     Duration.ofSeconds(llmProperties.chatTimeoutSeconds())));
-            if (text != null && !text.isBlank()) {
+            if (text != null && !text.isBlank() && !guard.violates(text)) {
                 return text.strip();
             }
         } catch (LlmException e) {

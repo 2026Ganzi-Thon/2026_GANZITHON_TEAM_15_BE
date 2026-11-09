@@ -99,16 +99,27 @@ public class CareChatService {
                 return;
             }
 
-            String reply = streamReply(turn, events);
+            Reply reply = streamReply(turn, events);
             if (reply == null) {
                 events.error(ERROR_CODE_AI_UNAVAILABLE, AI_UNAVAILABLE_MESSAGE);
                 return;
             }
-            String guarded = guard.guard(reply);
-            if (!guarded.equals(reply)) {
-                events.replace(guarded);
+            String finalText;
+            if (reply.blocked()) {
+                // 금지 패턴이 걸렸다: 그 문장은 내보내지 않았고, 안전 문장으로 대신한다
+                finalText = guard.safeReply();
+                if (reply.sentAnything()) {
+                    events.replace(finalText);
+                } else {
+                    events.delta(finalText);
+                }
+            } else {
+                finalText = guard.guard(reply.text());
+                if (!finalText.equals(reply.text())) {
+                    events.replace(finalText);
+                }
             }
-            store.saveAiMessage(turn.diaryId(), guarded);
+            store.saveAiMessage(turn.diaryId(), finalText);
             events.done();
         } catch (RuntimeException e) {
             log.warn("케어 대화 처리 중 오류 diaryId={} error={}", turn.diaryId(), e.getClass().getSimpleName());
@@ -118,24 +129,33 @@ public class CareChatService {
         }
     }
 
-    /** 응답이 실패하면 '잠시 숨을 고르고 있어요' 안내 후 다시 시도하고, 3번 실패하면 null입니다. */
-    private String streamReply(Turn turn, CareEvents events) {
+    /** 가드를 거친 응답 결과. blocked면 text는 쓰지 않고 안전 문장으로 대신합니다. */
+    private record Reply(String text, boolean blocked, boolean sentAnything) {
+    }
+
+    /**
+     * 문장 단위로 가드를 통과시키며 내려보냅니다.
+     * 응답이 실패하면 '잠시 숨을 고르고 있어요' 안내 후 다시 시도하고, 3번 실패하면 null입니다.
+     */
+    private Reply streamReply(Turn turn, CareEvents events) {
         LlmRequest request = LlmRequest.chat(systemPrompt(turn), contextMessages(turn),
                 Duration.ofSeconds(llmProperties.chatTimeoutSeconds()));
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            boolean[] emitted = {false};
+            SentenceGate gate = new SentenceGate(guard, events::delta);
             try {
-                String full = llmClient.stream(request, delta -> {
-                    emitted[0] = true;
-                    events.delta(delta);
-                });
+                String full = llmClient.stream(request, gate::accept);
+                gate.finish();
+                if (gate.blocked()) {
+                    log.warn("AI 응답 안전 가드 작동 diaryId={}", turn.diaryId());
+                    return new Reply(null, true, gate.sentAnything());
+                }
                 if (full != null && !full.isBlank()) {
-                    return full.strip();
+                    return new Reply(full.strip(), false, gate.sentAnything());
                 }
                 throw new LlmException(LlmException.Type.INVALID_RESPONSE, "빈 응답");
             } catch (LlmException e) {
                 log.warn("케어 응답 실패 attempt={} type={}", attempt, e.getType());
-                if (emitted[0]) {
+                if (gate.sentAnything()) {
                     events.reset();
                 }
                 if (attempt < MAX_ATTEMPTS) {

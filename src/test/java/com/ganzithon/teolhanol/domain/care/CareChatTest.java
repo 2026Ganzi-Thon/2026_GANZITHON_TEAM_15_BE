@@ -273,7 +273,7 @@ class CareChatTest {
         when(llmClient.stream(any(LlmRequest.class), any())).thenAnswer(inv -> {
             Consumer<String> onDelta = inv.getArgument(1);
             if (++calls[0] == 1) {
-                onDelta.accept("반쯤 오다가");
+                onDelta.accept("반쯤 왔어요. 그런데");
                 throw new LlmException(LlmException.Type.TIMEOUT, "timeout");
             }
             onDelta.accept("다시 말씀드릴게요.");
