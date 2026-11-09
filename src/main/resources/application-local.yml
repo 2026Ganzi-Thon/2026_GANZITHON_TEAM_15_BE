@@ -20,3 +20,6 @@ app:
   crypto:
     # 로컬 개발 전용 키입니다. 운영에서는 절대 쓰지 말고 APP_CRYPTO_KEY 환경변수로 주입하세요.
     key: ${APP_CRYPTO_KEY:XK/eAA3//tn+GV8oMsopZPAfr7Cg9Z61PHrZv8xQJPU=}
+  jwt:
+    # 로컬 개발 전용 비밀키입니다. 운영에서는 절대 쓰지 말고 APP_JWT_SECRET 환경변수로 주입하세요.
+    secret: ${APP_JWT_SECRET:local-dev-only-jwt-secret-change-me-0123456789}
