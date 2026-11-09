@@ -8,7 +8,7 @@
 - Spring Web MVC, Spring Data JPA, Spring Security, Bean Validation
 - MySQL 8.4 (로컬은 Docker), 테스트는 H2(MySQL 모드)
 - springdoc-openapi (Swagger UI)
-- Claude API (`anthropic-java` SDK, 기본 모델 `claude-opus-5-5`)
+- LLM: Upstage Solar Pro 4 (`solar-pro4`, HTTP 직접 호출) 또는 Claude API (`anthropic-java` SDK, `claude-opus-5-5`). `app.llm.provider`로 선택
 
 ## 로컬 실행
 
@@ -39,7 +39,7 @@ docker compose up -d
 | --- | --- | --- |
 | `local` (기본) | 로컬 개발 | Docker MySQL, `ddl-auto: update` |
 | `test` | 자동 테스트 | H2 (MySQL 모드), `create-drop` |
-| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `APP_JWT_SECRET`, `ANTHROPIC_API_KEY`, `ddl-auto: validate` |
+| `prod` | 운영 | 환경변수 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `APP_CRYPTO_KEY`, `APP_JWT_SECRET`, `UPSTAGE_API_KEY` 또는 `ANTHROPIC_API_KEY`, `ddl-auto: validate` |
 
 ## 패키지 구조
 
@@ -90,7 +90,7 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - 기능명세서 5장 수치는 `application.yml`의 `app.policy`에 있고, 코드에서는 `PolicyProperties`로 읽습니다.
 - 양 단계 기준표는 `SheepStage` (`ofMySheep`, `ofWorrySheep`)를 사용합니다.
 
-## LLM (Claude API)
+## LLM (Upstage Solar / Claude)
 
 위험도 분류, 케어 대화, 요약, 조언 필터는 `global/llm`의 `LlmClient`를 통해 호출합니다.
 
@@ -103,9 +103,11 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - 요청은 `LlmRequest.classification(...)`(생각 깊이 낮음, 재시도 없음, 타임아웃 지정) 또는 `LlmRequest.chat(...)`으로 만듭니다.
 - 실패하면 항상 `LlmException`이 나고, `type`(`TIMEOUT`, `UNAVAILABLE`, `REFUSAL`, `INVALID_RESPONSE`, `API_ERROR`)을 보고 대체 로직으로 넘어가면 됩니다.
 - 프롬프트는 `src/main/resources/prompts/{이름}.txt`에 두고 `PromptLoader`로 읽습니다. `withSafetyGuide(이름)`은 공통 안전 지침(`common-safety.txt`)을 앞에 붙입니다.
-- `ANTHROPIC_API_KEY`가 없으면 LLM 없이 서버가 뜨고 모든 호출이 `UNAVAILABLE`로 실패합니다.
-- LLM에는 본문만 보내고 이메일·닉네임은 보내지 않습니다. Claude API는 기본적으로 API 데이터를 모델 학습에 쓰지 않습니다.
-- 안전 분류기가 응답을 거절하면 서버가 다른 모델로 다시 시도하는 기능(`app.llm.server-fallback`)을 켜 두었습니다.
+- 공급자는 `app.llm.provider`(환경변수 `LLM_PROVIDER`)로 고릅니다. 기본 `auto`는 `UPSTAGE_API_KEY`가 있으면 Upstage Solar Pro 4, 없고 `ANTHROPIC_API_KEY`가 있으면 Claude를 씁니다. `upstage` / `claude`로 고정할 수도 있습니다. 시작할 때 로그에 어떤 공급자를 쓰는지 남습니다.
+- 키가 하나도 없으면 LLM 없이 서버가 뜨고 모든 호출이 `UNAVAILABLE`로 실패합니다.
+- Upstage는 OpenAI 호환 chat completions(`UPSTAGE_BASE_URL`, `UPSTAGE_MODEL`로 주소·모델 변경 가능)를 호출합니다. 생각 깊이(effort)는 보내지 않고, `completeJson`은 스키마 강제 대신 프롬프트로 JSON을 요청해 직접 파싱합니다. 형식이 어긋나면 `INVALID_RESPONSE`입니다.
+- LLM에는 본문만 보내고 이메일·닉네임은 보내지 않습니다. 각 공급자의 데이터 이용 정책은 약관을 확인하세요.
+- Claude를 쓸 때만 안전 분류기가 응답을 거절하면 서버가 다른 모델로 다시 시도하는 기능(`app.llm.server-fallback`)이 적용됩니다. Upstage에는 없습니다.
 
 ## 공통 응답 형식
 
