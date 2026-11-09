@@ -43,6 +43,7 @@ app:
       nickname-min-length: 2
       nickname-max-length: 12
       password-min-length: 8
+      reserved-nickname-words: [운영자, 관리자, 운영진, 털한올, admin, manager]
     diary:
       daily-limit: 3
     care:
