@@ -4,8 +4,8 @@
 
 | 워크플로 | 언제 | 하는 일 |
 | --- | --- | --- |
-| `CI` (`.github/workflows/ci.yml`) | 모든 PR, `main` 푸시 | `./gradlew build` (테스트 포함). 실패하면 테스트 리포트를 아티팩트로 올림 |
-| `CD` (`.github/workflows/cd.yml`) | `main` 푸시, 수동 실행 | Docker 이미지를 빌드해 GHCR(`ghcr.io/2026ganzi-thon/teolhanol-be`)에 올리고, EC2에서 새 이미지로 컨테이너 교체 |
+| `CI` (`.github/workflows/ci.yml`) | 모든 PR, `main`·`develop` 푸시 | `./gradlew build` (테스트 포함). 실패하면 테스트 리포트를 아티팩트로 올림 |
+| `CD` (`.github/workflows/cd.yml`) | `main` 푸시(`develop` → `main` PR 머지), 수동 실행 | Docker 이미지를 빌드해 GHCR(`ghcr.io/2026ganzi-thon/teolhanol-be`)에 올리고, EC2에서 새 이미지로 컨테이너 교체 |
 
 EC2 배포 단계는 저장소 변수 `DEPLOY_ENABLED`가 `true`일 때만 실행됩니다. EC2 준비 전에는 이미지 빌드·푸시까지만 돕니다.
 
