@@ -74,4 +74,14 @@ public class Diary extends BaseTimeEntity {
         this.riskLevel = RiskLevel.SAFE;
         this.careStatus = CareStatus.NONE;
     }
+
+    public boolean isCareStarted() {
+        return careStatus != CareStatus.NONE;
+    }
+
+    /** 케어를 시작합니다. 오늘의 마음 1개당 케어는 1회입니다 (CARE-01). */
+    public void startCare(CareType careType) {
+        this.careType = careType;
+        this.careStatus = CareStatus.IN_PROGRESS;
+    }
 }
