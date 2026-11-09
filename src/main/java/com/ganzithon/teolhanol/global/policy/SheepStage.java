@@ -53,6 +53,11 @@ public enum SheepStage {
         throw new IllegalArgumentException("알 수 없는 양 단계: " + level);
     }
 
+    /** 다음 단계. 마지막 단계면 null */
+    public SheepStage next() {
+        return isMax() ? null : ofLevel(level + 1);
+    }
+
     public boolean isMax() {
         return this == CLOUD;
     }

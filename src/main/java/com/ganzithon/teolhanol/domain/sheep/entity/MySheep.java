@@ -19,6 +19,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import com.ganzithon.teolhanol.global.policy.SheepStage;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,5 +54,11 @@ public class MySheep {
         this.user = user;
         this.woolCount = 0;
         this.stage = 1;
+    }
+
+    /** 털 한 올이 쌓입니다. 단계는 누적 털로 다시 정해집니다 (케어 마무리에서 사용). */
+    public void addWool() {
+        this.woolCount++;
+        this.stage = SheepStage.ofMySheep(woolCount).getLevel();
     }
 }
