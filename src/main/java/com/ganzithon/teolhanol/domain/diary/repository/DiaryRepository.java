@@ -3,6 +3,7 @@ package com.ganzithon.teolhanol.domain.diary.repository;
 import com.ganzithon.teolhanol.domain.diary.entity.Diary;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -12,6 +13,10 @@ import org.springframework.data.repository.query.Param;
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
 
     Optional<Diary> findByIdAndUserId(Long id, Long userId);
+
+    /** 기간(시작 포함, 끝 미포함) 안에 만든 본인 기록, 최신순 */
+    List<Diary> findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(
+            Long userId, LocalDateTime from, LocalDateTime to);
 
     /** 본인 기록만 잠가서 가져옵니다. 동시에 케어를 두 번 시작하는 것을 막습니다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

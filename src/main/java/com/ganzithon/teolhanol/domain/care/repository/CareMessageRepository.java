@@ -10,4 +10,6 @@ public interface CareMessageRepository extends JpaRepository<CareMessage, Long> 
     List<CareMessage> findByDiaryIdOrderByIdAsc(Long diaryId);
 
     Optional<CareMessage> findFirstByDiaryIdOrderByIdDesc(Long diaryId);
+
+    void deleteByDiaryId(Long diaryId);
 }
