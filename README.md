@@ -117,6 +117,7 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - `GET /diaries/{id}`: 감정, 케어 방식, 마무리 카드(`summary`), 내가 한 이야기(`firstMessage`), 대화 전체(`messages`), 털을 받았는지(`woolEarned`).
 - `DELETE /diaries/{id}`: 대화와 카드를 함께 삭제. 이미 쌓인 나의 양 털은 유지. 수정은 없음.
 - 모두 본인 기록만, 남의 기록은 404.
+- `GET /diaries/summary?month=2026-11` (비우면 이번 달): `{month, woolCount, sentence}`. `woolCount`는 그 달에 마무리해 털을 받은 마음의 수(위기 신호가 나온 대화 제외), `sentence`는 가장 자주 고른 '감정 × 케어 방식' 한 문장(예: '불안한 날엔 위로받기를 자주 골랐어요', 같은 횟수면 더 최근 조합). 털을 받은 기록이 3개 미만이면 `sentence`는 null. 기록을 삭제하면 이 집계에서도 빠집니다.
 
 ## 시드 데이터와 정책 수치
 
