@@ -68,6 +68,13 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    /** 위기 판정 후 상담 안내 배너를 켭니다 (SAF-02). 이미 더 늦게 끝나는 배너가 있으면 유지합니다. */
+    public void activateCrisisBanner(LocalDateTime until) {
+        if (crisisBannerUntil == null || crisisBannerUntil.isBefore(until)) {
+            crisisBannerUntil = until;
+        }
+    }
+
     public boolean isLocked(LocalDateTime now) {
         return lockedUntil != null && lockedUntil.isAfter(now);
     }

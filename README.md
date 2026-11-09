@@ -69,6 +69,20 @@ com.ganzithon.teolhanol
 - 테스트에서 로그인 사용자가 필요하면 `@Import(TestUsers.class)` 후 `testUsers.signIn(email, nickname)` → `login.bearer()` (`src/test/.../support/TestUsers.java`).
 - 로컬은 개발용 키를 쓰고, 운영은 `APP_JWT_SECRET` 필수 (`openssl rand -base64 48`).
 
+## 위험도 분류 (SAF-01)
+
+케어 대화 메시지와 고민 본문은 저장·응답 전에 `RiskClassifier`를 거칩니다.
+
+```java
+RiskResult r = riskClassifier.classify(text, CrisisSource.MESSAGE /* 또는 WORRY */, user);
+r.level();      // SAFE / CAUTION / CRISIS (키워드와 LLM 중 더 높은 등급)
+r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
+```
+
+- 예외를 던지지 않습니다. LLM이 실패하거나 5초를 넘기면 키워드 결과를 쓰되 최소 `CAUTION`입니다 (`r.llmFailed()`로 구분).
+- 결과는 `crisis_logs`에 기록하고(본문 제외), 위기면 `users.crisis_banner_until`을 24시간 뒤로 켭니다.
+- 프롬프트는 `prompts/risk-classification.txt`. 테스트에서는 `@MockitoBean LlmClient`로 판정을 정해 둘 수 있습니다.
+
 ## 시드 데이터와 정책 수치
 
 - 서버가 시작될 때 `src/main/resources/seed/`의 목장 4곳과 안전 패턴(위기 키워드, 금칙어, AI 응답 금지 패턴, 개인정보 정규식)을 넣습니다. 이미 있는 데이터는 건너뜁니다.
