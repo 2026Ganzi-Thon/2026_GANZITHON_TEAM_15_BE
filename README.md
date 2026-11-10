@@ -119,6 +119,14 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - 모두 본인 기록만, 남의 기록은 404.
 - `GET /diaries/summary?month=2026-11` (비우면 이번 달): `{month, woolCount, sentence}`. `woolCount`는 그 달에 마무리해 털을 받은 마음의 수(위기 신호가 나온 대화 제외), `sentence`는 가장 자주 고른 '감정 × 케어 방식' 한 문장(예: '불안한 날엔 위로받기를 자주 골랐어요', 같은 횟수면 더 최근 조합). 털을 받은 기록이 3개 미만이면 `sentence`는 null. 기록을 삭제하면 이 집계에서도 빠집니다.
 
+## 나의 양 꾸미기 (SHP-03)
+
+- `GET /my-sheep/items`: `{yarnCount, spentYarn, items:[{code, name, yarnCost, owned, equipped}]}`. 아이템은 목도리(SCARF)·모자(HAT)·방울(BELL)·리본(RIBBON) 고정 순서. `GET /my-sheep`의 `equippedItems`에도 착용 중인 코드가 반영됩니다.
+- `PUT /my-sheep/items` `{ "craft": ["SCARF"], "equipped": ["SCARF"] }`: `craft`는 털실로 만들 아이템(이미 가진 건 털실을 쓰지 않고 건너뜀), `equipped`는 저장 후 착용할 전체 목록(없는 건 해제, 생략하면 변경 없음). 응답은 `GET /my-sheep/items`와 같은 모양.
+- 털실이 모자라면 409 `SHEEP_YARN_NOT_ENOUGH`(아무것도 바뀌지 않음), 만들지 않은 아이템을 착용하면 409 `SHEEP_ITEM_NOT_OWNED`, 알 수 없는 코드는 400. 꾸미기는 털 단계에 영향이 없습니다.
+- 아이템 이름과 필요 털실은 `application.yml`의 `app.sheep-items.items`(고정 데이터)에서 바꿉니다. 지금 값(목도리 3, 모자 4, 방울 2, 리본 2)은 디자인 확정 전 임시 값입니다.
+- 털실은 목장에서 조언을 보낼 때 쌓이므로(#27) 그 기능이 머지될 때까지는 DB에서 `users.yarn_count`를 직접 올려 확인합니다.
+
 ## 시드 데이터와 정책 수치
 
 - 서버가 시작될 때 `src/main/resources/seed/`의 목장 4곳과 안전 패턴(위기 키워드, 금칙어, AI 응답 금지 패턴, 개인정보 정규식)을 넣습니다. 이미 있는 데이터는 건너뜁니다.

@@ -68,6 +68,15 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    /** 털실을 씁니다 (나의 양 꾸미기). 모자라면 false이고 아무것도 바꾸지 않습니다. */
+    public boolean spendYarn(int amount) {
+        if (amount < 0 || yarnCount < amount) {
+            return false;
+        }
+        yarnCount -= amount;
+        return true;
+    }
+
     /** 위기 판정 후 상담 안내 배너를 켭니다 (SAF-02). 이미 더 늦게 끝나는 배너가 있으면 유지합니다. */
     public void activateCrisisBanner(LocalDateTime until) {
         if (crisisBannerUntil == null || crisisBannerUntil.isBefore(until)) {

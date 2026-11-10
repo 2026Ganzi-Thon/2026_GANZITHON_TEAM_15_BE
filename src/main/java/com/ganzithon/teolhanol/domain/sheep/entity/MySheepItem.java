@@ -41,6 +41,10 @@ public class MySheepItem {
     @Column(nullable = false)
     private boolean equipped;
 
+    public void setEquipped(boolean equipped) {
+        this.equipped = equipped;
+    }
+
     public MySheepItem(MySheep mySheep, String itemCode) {
         this.mySheep = mySheep;
         this.itemCode = itemCode;
