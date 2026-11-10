@@ -119,12 +119,18 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - 모두 본인 기록만, 남의 기록은 404.
 - `GET /diaries/summary?month=2026-11` (비우면 이번 달): `{month, woolCount, sentence}`. `woolCount`는 그 달에 마무리해 털을 받은 마음의 수(위기 신호가 나온 대화 제외), `sentence`는 가장 자주 고른 '감정 × 케어 방식' 한 문장(예: '불안한 날엔 위로받기를 자주 골랐어요', 같은 횟수면 더 최근 조합). 털을 받은 기록이 3개 미만이면 `sentence`는 null. 기록을 삭제하면 이 집계에서도 빠집니다.
 
+## 닉네임 (ACC-01, ACC-05)
+
+- 규칙(와이어프레임 v3): 2~10자, 한글·영문·숫자와 띄어쓰기 한 칸, 중복 불가(대소문자 무시), 사칭 단어·금칙어·개인정보 패턴 불가. 길이는 `app.policy.auth.nickname-min/max-length`로 조정합니다. 가입 화면의 `GET /auth/nickname/availability`와 가입, 닉네임 바꾸기가 같은 검사(`NicknameValidator`)를 씁니다.
+- `PUT /users/me/nickname` `{ "nickname": "..." }` (로그인 필요): 나 탭 '닉네임 바꾸기'(ME-02). 응답은 `{userId, nickname}`. 쓸 수 없으면 409 `ACCOUNT_NICKNAME_UNAVAILABLE`과 이유 문구, 지금 닉네임과 같으면 그대로 성공, 내 이름의 대소문자만 바꾸는 것은 허용. 이미 올린 고민·조언에는 사용자 id로 연결되어 새 닉네임이 그대로 보입니다.
+- 금칙어·개인정보 검사(#33, #34)는 `NicknameContentFilter` 빈을 만들면 가입과 닉네임 바꾸기 모두에 자동으로 적용됩니다.
+
 ## 나의 양 꾸미기 (SHP-03)
 
 - `GET /my-sheep/items`: `{yarnCount, spentYarn, items:[{code, name, yarnCost, owned, equipped}]}`. 아이템은 목도리(SCARF)·모자(HAT)·방울(BELL)·리본(RIBBON) 고정 순서. `GET /my-sheep`의 `equippedItems`에도 착용 중인 코드가 반영됩니다.
 - `PUT /my-sheep/items` `{ "craft": ["SCARF"], "equipped": ["SCARF"] }`: `craft`는 털실로 만들 아이템(이미 가진 건 털실을 쓰지 않고 건너뜀), `equipped`는 저장 후 착용할 전체 목록(없는 건 해제, 생략하면 변경 없음). 응답은 `GET /my-sheep/items`와 같은 모양.
 - 털실이 모자라면 409 `SHEEP_YARN_NOT_ENOUGH`(아무것도 바뀌지 않음), 만들지 않은 아이템을 착용하면 409 `SHEEP_ITEM_NOT_OWNED`, 알 수 없는 코드는 400. 꾸미기는 털 단계에 영향이 없습니다.
-- 아이템 이름과 필요 털실은 `application.yml`의 `app.sheep-items.items`(고정 데이터)에서 바꿉니다. 지금 값(목도리 3, 모자 4, 방울 2, 리본 2)은 디자인 확정 전 임시 값입니다.
+- 아이템 이름과 필요 털실은 `application.yml`의 `app.sheep-items.items`(고정 데이터)에서 바꿉니다. 지금 값은 와이어프레임 v3(ME-03) 기준 모자 5, 방울 8, 리본 3이고, 목도리(3)는 화면에 값이 없어 임시 값입니다.
 - 털실은 목장에서 조언을 보낼 때 쌓이므로(#27) 그 기능이 머지될 때까지는 DB에서 `users.yarn_count`를 직접 올려 확인합니다.
 
 ## 기록 전체 삭제와 탈퇴 (ACC-03)

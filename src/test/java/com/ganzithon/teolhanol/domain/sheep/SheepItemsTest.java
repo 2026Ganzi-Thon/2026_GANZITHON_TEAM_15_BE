@@ -92,14 +92,14 @@ class SheepItemsTest {
         giveYarn(me.userId(), 10);
 
         save("{\"craft\":[\"SCARF\",\"HAT\"]}", me).andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.spentYarn").value(7))
-                .andExpect(jsonPath("$.data.yarnCount").value(3))
+                .andExpect(jsonPath("$.data.spentYarn").value(8))
+                .andExpect(jsonPath("$.data.yarnCount").value(2))
                 .andExpect(jsonPath("$.data.items[0].owned").value(true))
                 .andExpect(jsonPath("$.data.items[0].equipped").value(false))
                 .andExpect(jsonPath("$.data.items[1].owned").value(true))
                 .andExpect(jsonPath("$.data.items[2].owned").value(false));
 
-        assertThat(yarnOf(me.userId())).isEqualTo(3);
+        assertThat(yarnOf(me.userId())).isEqualTo(2);
         assertThat(mySheepItemRepository.count()).isEqualTo(2);
     }
 
@@ -107,7 +107,7 @@ class SheepItemsTest {
     void 털실이_모자라면_409이고_아무것도_바뀌지_않는다() throws Exception {
         giveYarn(me.userId(), 5);
 
-        // 목도리(3) + 모자(4) = 7 > 5. 목도리만으로는 되지만 함께 요청하면 전부 거절
+        // 목도리(3) + 모자(5) = 8 > 5. 목도리만으로는 되지만 함께 요청하면 전부 거절
         save("{\"craft\":[\"SCARF\",\"HAT\"],\"equipped\":[\"SCARF\"]}", me).andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("SHEEP_YARN_NOT_ENOUGH"));
 
@@ -118,11 +118,11 @@ class SheepItemsTest {
     @Test
     void 이미_가진_아이템을_다시_만들어도_털실을_쓰지_않는다() throws Exception {
         giveYarn(me.userId(), 10);
-        save("{\"craft\":[\"BELL\"]}", me).andExpect(jsonPath("$.data.yarnCount").value(8));
+        save("{\"craft\":[\"BELL\"]}", me).andExpect(jsonPath("$.data.yarnCount").value(2));
 
         save("{\"craft\":[\"BELL\",\"BELL\"]}", me).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.spentYarn").value(0))
-                .andExpect(jsonPath("$.data.yarnCount").value(8));
+                .andExpect(jsonPath("$.data.yarnCount").value(2));
         assertThat(mySheepItemRepository.count()).isEqualTo(1);
     }
 
@@ -215,7 +215,7 @@ class SheepItemsTest {
             pool.shutdownNow();
         }
 
-        assertThat(yarnOf(me.userId())).isEqualTo(6);
+        assertThat(yarnOf(me.userId())).isEqualTo(5);
         assertThat(mySheepItemRepository.count()).isEqualTo(1);
     }
 

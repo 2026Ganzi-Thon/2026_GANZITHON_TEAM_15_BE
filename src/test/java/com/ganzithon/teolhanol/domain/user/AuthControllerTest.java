@@ -69,9 +69,9 @@ class AuthControllerTest {
 
     @Test
     void 다른_사람이_쓰는_닉네임이면_409와_이유_문구() throws Exception {
-        signup(body("a@test.com", "warmwool123", "Wool Keeper", true)).andExpect(status().isCreated());
+        signup(body("a@test.com", "warmwool123", "Wool Pal", true)).andExpect(status().isCreated());
 
-        signup(body("b@test.com", "warmwool123", "wool keeper", true))
+        signup(body("b@test.com", "warmwool123", "wool pal", true))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("ACCOUNT_NICKNAME_UNAVAILABLE"))
                 .andExpect(jsonPath("$.error.message").value("이미 다른 목동이 쓰고 있는 이름이에요."));
