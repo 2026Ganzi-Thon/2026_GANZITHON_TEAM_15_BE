@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MySheepItemRepository extends JpaRepository<MySheepItem, Long> {
 
+    List<MySheepItem> findByMySheepIdOrderById(Long mySheepId);
+
     List<MySheepItem> findByMySheepIdAndEquippedTrueOrderById(Long mySheepId);
 }

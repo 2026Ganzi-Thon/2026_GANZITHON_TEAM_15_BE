@@ -27,7 +27,11 @@ public enum ErrorCode {
     NICKNAME_UNAVAILABLE(HttpStatus.CONFLICT, "ACCOUNT_NICKNAME_UNAVAILABLE", "이 이름은 쓸 수 없어요. 다른 이름을 골라 주세요."),
     PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "ACCOUNT_PASSWORD_TOO_SHORT", "비밀번호는 8자 이상으로 정해 주세요."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "ACCOUNT_LOGIN_FAILED", "이메일이나 비밀번호를 한 번 더 확인해 주세요."),
-    ACCOUNT_LOCKED(HttpStatus.LOCKED, "ACCOUNT_LOCKED", "잠시 쉬어 갈게요. 잠시 뒤에 다시 로그인해 주세요.");
+    ACCOUNT_LOCKED(HttpStatus.LOCKED, "ACCOUNT_LOCKED", "잠시 쉬어 갈게요. 잠시 뒤에 다시 로그인해 주세요."),
+
+    // 나의 양 꾸미기 (A)
+    YARN_NOT_ENOUGH(HttpStatus.CONFLICT, "SHEEP_YARN_NOT_ENOUGH", "털실이 조금 모자라요. 다른 목동에게 조언을 보내면 털실을 모을 수 있어요."),
+    ITEM_NOT_OWNED(HttpStatus.CONFLICT, "SHEEP_ITEM_NOT_OWNED", "아직 만들지 않은 아이템이에요. 먼저 털실로 만들어 주세요.");
 
     private final HttpStatus status;
     private final String code;
