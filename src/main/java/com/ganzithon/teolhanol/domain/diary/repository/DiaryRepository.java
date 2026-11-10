@@ -14,6 +14,8 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
 
     Optional<Diary> findByIdAndUserId(Long id, Long userId);
 
+    long countByUserId(Long userId);
+
     /** 기간(시작 포함, 끝 미포함) 안에 만든 본인 기록, 최신순 */
     List<Diary> findByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(
             Long userId, LocalDateTime from, LocalDateTime to);
