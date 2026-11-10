@@ -26,7 +26,7 @@ public record PolicyProperties(
      * @param maxLoginFailures  로그인 실패 5회 시 잠금
      * @param lockMinutes       잠금 5분
      * @param nicknameMinLength 닉네임 최소 2자
-     * @param nicknameMaxLength 닉네임 최대 12자
+     * @param nicknameMaxLength 닉네임 최대 10자
      * @param passwordMinLength 비밀번호 최소 8자
      * @param reservedNicknameWords 닉네임에 쓸 수 없는 사칭 단어 (띄어쓰기·대소문자 무시)
      */

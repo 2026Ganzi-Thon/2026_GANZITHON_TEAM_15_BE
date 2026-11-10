@@ -14,6 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByNicknameIgnoreCase(String nickname);
 
+    /** 내 자신을 뺀 다른 사용자가 같은 닉네임을 쓰는지 (닉네임 바꾸기용) */
+    boolean existsByNicknameIgnoreCaseAndIdNot(String nickname, Long id);
+
     Optional<User> findByEmail(String email);
 
     /** 털실처럼 동시에 바뀌면 안 되는 값을 다룰 때 쓰는 잠금 조회 */

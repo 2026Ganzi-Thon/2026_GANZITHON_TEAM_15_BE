@@ -75,7 +75,7 @@ class SeedDataInitializerTest {
         assertThat(policy.care().minUserMessagesForWool()).isEqualTo(3);
         assertThat(policy.care().maxUserMessages()).isEqualTo(10);
         assertThat(policy.auth().nicknameMinLength()).isEqualTo(2);
-        assertThat(policy.auth().nicknameMaxLength()).isEqualTo(12);
+        assertThat(policy.auth().nicknameMaxLength()).isEqualTo(10);
         assertThat(policy.auth().passwordMinLength()).isEqualTo(8);
         assertThat(policy.worry().woolCap()).isEqualTo(10);
         assertThat(policy.worry().pageSize()).isEqualTo(20);

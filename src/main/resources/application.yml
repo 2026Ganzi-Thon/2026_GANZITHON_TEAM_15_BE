@@ -43,20 +43,21 @@ app:
     chat-timeout-seconds: 60
     max-retries: 2
     server-fallback: true
-  # 나의 양 꾸미기 아이템 고정 데이터 (SHP-03). 필요 털실은 디자인 확정 전 임시 값
+  # 나의 양 꾸미기 아이템 고정 데이터 (SHP-03). 필요 털실은 와이어프레임 v3 ME-03 기준
+  # (목도리는 화면에 값이 없어 임시 값)
   sheep-items:
     items:
       - { code: SCARF, name: 목도리, yarn-cost: 3 }
-      - { code: HAT, name: 모자, yarn-cost: 4 }
-      - { code: BELL, name: 방울, yarn-cost: 2 }
-      - { code: RIBBON, name: 리본, yarn-cost: 2 }
+      - { code: HAT, name: 모자, yarn-cost: 5 }
+      - { code: BELL, name: 방울, yarn-cost: 8 }
+      - { code: RIBBON, name: 리본, yarn-cost: 3 }
   # 기능명세서 5장 정책 수치 (시연 기준 초안, 2026-11-08 와이어프레임 v2 기준)
   policy:
     auth:
       max-login-failures: 5
       lock-minutes: 5
       nickname-min-length: 2
-      nickname-max-length: 12
+      nickname-max-length: 10
       password-min-length: 8
       reserved-nickname-words: [운영자, 관리자, 운영진, 털한올, admin, manager]
     diary:

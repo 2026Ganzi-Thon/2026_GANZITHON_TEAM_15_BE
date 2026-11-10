@@ -3,7 +3,7 @@ package com.ganzithon.teolhanol.domain.sheep.dto;
 import java.util.List;
 
 /**
- * 꾸미기 화면(ME-02) 데이터.
+ * 꾸미기 화면(ME-03) 데이터.
  *
  * @param yarnCount 지금 가진 털실
  * @param spentYarn 이번 요청으로 쓴 털실 (조회에서는 0)

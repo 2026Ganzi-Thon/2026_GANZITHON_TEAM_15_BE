@@ -68,6 +68,11 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    /** 닉네임을 바꿉니다 (ACC-05). 규칙 검사는 서비스에서 합니다. */
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     /** 털실을 씁니다 (나의 양 꾸미기). 모자라면 false이고 아무것도 바꾸지 않습니다. */
     public boolean spendYarn(int amount) {
         if (amount < 0 || yarnCount < amount) {

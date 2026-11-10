@@ -33,7 +33,7 @@ public class MySheepController {
         return ApiResponse.ok(mySheepService.get(user.id()));
     }
 
-    @Operation(summary = "꾸미기 화면 데이터 (SHP-03 ME-02)",
+    @Operation(summary = "꾸미기 화면 데이터 (SHP-03 ME-03)",
             description = "가진 털실, 전체 아이템(목도리·모자·방울·리본)과 필요 털실, 가진 여부, 착용 여부.")
     @GetMapping("/items")
     public ApiResponse<SheepItemsResponse> items(@AuthenticationPrincipal AuthUser user) {

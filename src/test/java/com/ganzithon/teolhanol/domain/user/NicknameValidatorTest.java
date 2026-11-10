@@ -25,11 +25,11 @@ class NicknameValidatorTest {
     void setUp() {
         mySheepRepository.deleteAll();
         userRepository.deleteAll();
-        userRepository.save(new User("taken@test.com", "hash", "Sleepy Sheep"));
+        userRepository.save(new User("taken@test.com", "hash", "Sleepy Ram"));
     }
 
     @ParameterizedTest(name = "\"{0}\" → 사용 가능")
-    @CsvSource({"다정한 목동", "양", "sheep 01", "털복숭이123", "'  앞뒤 공백  '"})
+    @CsvSource({"다정한 목동", "양", "sheep 01", "털복숭이123", "가나다라마바사아자차", "'  앞뒤 공백  '"})
     void 규칙에_맞는_닉네임은_쓸_수_있다(String nickname) {
         String value = nickname.length() == 1 ? nickname + "a" : nickname;
         assertThat(validator.check(value)).isEmpty();
@@ -39,13 +39,14 @@ class NicknameValidatorTest {
     @CsvSource({
             "가, LENGTH",
             "열세글자를넘는아주긴닉네임이다, LENGTH",
+            "가나다라마바사아자차카, LENGTH",
             "목동!, CHARACTERS",
             "'다정한  목동', CHARACTERS",
             "ㄱㄴㄷ, CHARACTERS",
             "운영자 목동, NOT_ALLOWED",
             "털 한 올, NOT_ALLOWED",
             "ADMIN01, NOT_ALLOWED",
-            "sleepy sheep, DUPLICATE"
+            "sleepy ram, DUPLICATE"
     })
     void 규칙에_어긋나면_이유를_돌려준다(String nickname, NicknameReason reason) {
         assertThat(validator.check(nickname)).contains(reason);
@@ -53,6 +54,6 @@ class NicknameValidatorTest {
 
     @Test
     void 길이_안내_문구에_정책값이_들어간다() {
-        assertThat(validator.message(NicknameReason.LENGTH)).isEqualTo("닉네임은 2~12자로 정해 주세요.");
+        assertThat(validator.message(NicknameReason.LENGTH)).isEqualTo("닉네임은 2~10자로 정해 주세요.");
     }
 }

@@ -33,6 +33,15 @@ public class NicknameValidator {
     /** 쓸 수 있으면 비어 있고, 쓸 수 없으면 이유를 돌려줍니다. */
     @Transactional(readOnly = true)
     public Optional<NicknameReason> check(String rawNickname) {
+        return check(rawNickname, null);
+    }
+
+    /**
+     * 이미 가입한 사용자가 닉네임을 바꿀 때 쓰는 검사. 중복은 자기 자신을 뺀 다른 사용자만 따지므로
+     * 내 이름에서 대소문자만 바꾸는 것도 허용됩니다. currentUserId가 null이면 가입 때와 같습니다.
+     */
+    @Transactional(readOnly = true)
+    public Optional<NicknameReason> check(String rawNickname, Long currentUserId) {
         String nickname = normalize(rawNickname);
         int length = nickname.codePointCount(0, nickname.length());
         PolicyProperties.Auth auth = policy.auth();
@@ -45,7 +54,10 @@ public class NicknameValidator {
         if (containsReservedWord(nickname) || contentFilters.orderedStream().anyMatch(f -> !f.isAllowed(nickname))) {
             return Optional.of(NicknameReason.NOT_ALLOWED);
         }
-        if (userRepository.existsByNicknameIgnoreCase(nickname)) {
+        boolean taken = currentUserId == null
+                ? userRepository.existsByNicknameIgnoreCase(nickname)
+                : userRepository.existsByNicknameIgnoreCaseAndIdNot(nickname, currentUserId);
+        if (taken) {
             return Optional.of(NicknameReason.DUPLICATE);
         }
         return Optional.empty();
