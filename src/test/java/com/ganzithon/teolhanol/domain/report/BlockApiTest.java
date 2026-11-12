@@ -146,6 +146,23 @@ class BlockApiTest {
     }
 
     @Test
+    void 볼_수_없는_보호_양으로는_차단할_수_없고_닉네임도_나오지_않는다() throws Exception {
+        var farm = farmRepository.findAll().stream().filter(f -> f.getCode().equals("CAREER")).findFirst().orElseThrow();
+        WorrySheep protectedSheep = worrySheepRepository.saveAndFlush(
+                new WorrySheep(user(shepherd), farm, "요즘 많이 지쳐요", RiskLevel.CAUTION));
+
+        String body = block(me, "WORRY_SHEEP", protectedSheep.getId()).andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("상대목동");
+        assertThat(blockRepository.count()).isZero();
+
+        // 이미 조언을 보낸 보호 양이면 볼 수 있으므로 차단할 수 있습니다.
+        wool(protectedSheep, me);
+        block(me, "WORRY_SHEEP", protectedSheep.getId()).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.nickname").value("상대목동"));
+    }
+
+    @Test
     void 자기_자신은_차단할_수_없다() throws Exception {
         WorrySheep mine = sheep(me);
         block(me, "WORRY_SHEEP", mine.getId()).andExpect(status().isBadRequest())

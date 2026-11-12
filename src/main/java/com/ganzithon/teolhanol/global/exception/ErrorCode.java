@@ -43,7 +43,9 @@ public enum ErrorCode {
     WORRY_SHEEP_GRADUATED(HttpStatus.CONFLICT, "WORRY_SHEEP_GRADUATED", "이 양은 방금 목장을 떠났어요."),
     WOOL_OWN_SHEEP(HttpStatus.FORBIDDEN, "WOOL_OWN_SHEEP",
             "내 고민 양에는 털을 보낼 수 없어요. 다른 목동의 양을 둘러봐 주세요."),
-    WOOL_ALREADY_SENT(HttpStatus.CONFLICT, "WOOL_ALREADY_SENT", "이 양에게는 이미 털 한 올을 보냈어요.");
+    WOOL_ALREADY_SENT(HttpStatus.CONFLICT, "WOOL_ALREADY_SENT", "이 양에게는 이미 털 한 올을 보냈어요."),
+    REPORT_OWN_CONTENT(HttpStatus.BAD_REQUEST, "REPORT_OWN_CONTENT", "내가 쓴 글은 신고할 수 없어요."),
+    REPORT_DUPLICATED(HttpStatus.CONFLICT, "REPORT_DUPLICATED", "이미 신고해 주신 내용이에요. 살펴볼게요, 고마워요.");
 
     private final HttpStatus status;
     private final String code;

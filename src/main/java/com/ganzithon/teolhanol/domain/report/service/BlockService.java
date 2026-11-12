@@ -8,6 +8,7 @@ import com.ganzithon.teolhanol.domain.user.repository.UserRepository;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
 import com.ganzithon.teolhanol.domain.worry.repository.WorrySheepRepository;
+import com.ganzithon.teolhanol.domain.worry.service.WorrySheepAccess;
 import com.ganzithon.teolhanol.global.exception.BusinessException;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
 import java.util.List;
@@ -28,6 +29,7 @@ public class BlockService {
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
     private final WorrySheepRepository worrySheepRepository;
+    private final WorrySheepAccess access;
 
     /** API 용: 양·조언 id로 대상을 찾아 차단합니다. */
     public Result block(Long blockerId, BlockCreateRequest request) {
@@ -35,7 +37,7 @@ public class BlockService {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
         Long targetUserId = switch (request.targetType()) {
-            case WORRY_SHEEP -> ownerOfViewableSheep(request.targetId());
+            case WORRY_SHEEP -> ownerOfViewableSheep(blockerId, request.targetId());
             case WOOL -> senderOfMyReceivedWool(blockerId, request.targetId());
         };
         return blockUserWithResult(blockerId, targetUserId);
@@ -78,11 +80,18 @@ public class BlockService {
         blockRepository.delete(block);
     }
 
-    /** 숨김·졸업 양은 볼 수 없으므로 없는 양처럼 404 입니다. */
-    private Long ownerOfViewableSheep(Long sheepId) {
+    /**
+     * 숨김·졸업 양과 볼 수 없는 보호 양은 없는 양처럼 404 입니다(닉네임을 흘리지 않도록, {@link WorrySheepAccess} 기준).
+     * 이미 차단한 목동을 다시 차단하면 기존 차단을 돌려줘야 하므로 차단 관계는 여기서 보지 않습니다.
+     */
+    private Long ownerOfViewableSheep(Long blockerId, Long sheepId) {
         WorrySheep sheep = worrySheepRepository.findDetailById(sheepId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         if (sheep.getStatus() != WorrySheepStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.NOT_FOUND);
+        }
+        if (!access.isOwner(sheep, blockerId)
+                && !access.canSeeRisk(sheep, blockerId, access.hasSent(sheepId, blockerId))) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
         return sheep.getUser().getId();
