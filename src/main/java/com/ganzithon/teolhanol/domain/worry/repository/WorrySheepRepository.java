@@ -8,7 +8,9 @@ import java.util.Collection;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import java.time.LocalDateTime;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +19,12 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
     /** 상세 화면용: 작성자와 목장을 함께 가져옵니다. */
     @Query("select s from WorrySheep s join fetch s.user join fetch s.farm where s.id = :id")
     Optional<WorrySheep> findDetailById(@Param("id") Long id);
+
+    /** 털 개수·상태를 바꿀 때 쓰는 잠금 조회 (WOL-01). 양 행만 잠급니다. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from WorrySheep s where s.id = :id")
+    Optional<WorrySheep> findByIdForUpdate(@Param("id") Long id);
+
     /**
      * 풀밭 양 목록 (FRM-01). 작성자 닉네임과 '이미 보냄' 여부를 한 쿼리로 가져오고, 정렬·페이지도 DB에서 합니다.
      * 제외: ACTIVE가 아닌 양, 내 양, 차단 관계(양방향) 사용자의 양, visibleRiskLevels에 없는 위험도의 양.

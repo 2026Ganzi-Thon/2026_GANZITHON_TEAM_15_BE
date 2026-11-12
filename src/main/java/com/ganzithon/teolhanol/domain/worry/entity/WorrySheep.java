@@ -93,7 +93,7 @@ public class WorrySheep extends BaseTimeEntity {
 
     /**
      * 조언(털) 한 올을 받습니다 (WOL-01). 털 상한(cap)에 닿았으면 더 늘리지 않고, 단계는 받은 털 수로 다시 정합니다.
-     * TODO(#27): 상한 도달 시 졸업 처리는 조언 보내기에서 정합니다.
+     * 상한 도달 시 졸업은 조언 보내기(WoolSendWriter)가 같은 트랜잭션에서 {@link #graduate()}로 처리합니다.
      */
     public void addWool(int cap) {
         if (woolCount >= cap) {
