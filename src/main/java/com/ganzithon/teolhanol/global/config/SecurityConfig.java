@@ -5,6 +5,7 @@ import com.ganzithon.teolhanol.global.response.ApiResponse;
 import java.util.List;
 import com.ganzithon.teolhanol.global.security.JwtAuthenticationFilter;
 import com.ganzithon.teolhanol.global.security.JwtProvider;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -54,6 +55,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // SSE(케어 대화·알림 스트림)가 끝날 때의 비동기 디스패치. 처음 요청에서 이미 인증을 거쳤고,
+                        // JWT 필터는 이 디스패치에서 다시 돌지 않으므로 여기서 막으면 이미 보낸 응답에 401을 쓰려다 오류가 납니다.
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)

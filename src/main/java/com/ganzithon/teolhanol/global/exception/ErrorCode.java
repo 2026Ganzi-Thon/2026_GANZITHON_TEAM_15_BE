@@ -44,7 +44,9 @@ public enum ErrorCode {
     WOOL_OWN_SHEEP(HttpStatus.FORBIDDEN, "WOOL_OWN_SHEEP",
             "내 고민 양에는 털을 보낼 수 없어요. 다른 목동의 양을 둘러봐 주세요."),
     WOOL_ALREADY_SENT(HttpStatus.CONFLICT, "WOOL_ALREADY_SENT", "이 양에게는 이미 털 한 올을 보냈어요."),
-    THANKS_ALREADY_SENT(HttpStatus.CONFLICT, "THANKS_ALREADY_SENT", "이 조언에는 이미 고마운 마음을 전했어요.");
+    THANKS_ALREADY_SENT(HttpStatus.CONFLICT, "THANKS_ALREADY_SENT", "이 조언에는 이미 고마운 마음을 전했어요."),
+    PUSH_ENDPOINT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PUSH_ENDPOINT_NOT_ALLOWED",
+            "이 브라우저에서는 알림을 받을 수 없어요. 앱 안 알림으로 알려 드릴게요.");
 
     private final HttpStatus status;
     private final String code;
