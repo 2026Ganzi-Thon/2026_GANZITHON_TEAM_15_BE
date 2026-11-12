@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -78,4 +79,14 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
 
     /** 기준 시각 이후 이 사용자가 만든 고민 양 수. 숨김·졸업 포함 (하루 한도 검사용, FRM-04) */
     long countByUserIdAndCreatedAtGreaterThanEqual(Long userId, LocalDateTime since);
+
+    /** 작성 시각이 threshold 이전(같은 시각 포함)인 ACTIVE 양을 한 번에 졸업시킵니다 (FRM-06). 숨김 양은 건드리지 않습니다. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update WorrySheep w set w.status = com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus.GRADUATED,
+                w.graduatedAt = :now
+            where w.status = com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus.ACTIVE
+              and w.createdAt <= :threshold
+            """)
+    int graduateCreatedBefore(@Param("threshold") LocalDateTime threshold, @Param("now") LocalDateTime now);
 }
