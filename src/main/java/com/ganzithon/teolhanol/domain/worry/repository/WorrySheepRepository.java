@@ -2,6 +2,9 @@ package com.ganzithon.teolhanol.domain.worry.repository;
 
 import com.ganzithon.teolhanol.domain.worry.dto.FarmSheepRow;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
+import com.ganzithon.teolhanol.domain.worry.dto.MyWorryRow;
+import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
+import java.util.List;
 import java.util.Optional;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import java.util.Collection;
@@ -47,6 +50,24 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
                                       @Param("farmId") Long farmId,
                                       @Param("visibleRiskLevels") Collection<RiskLevel> visibleRiskLevels,
                                       Pageable pageable);
+    /**
+     * 내 고민 목록 (FRM-05). 양마다 '확인 이후 새로 받은 털 수'를 한 번의 집계 쿼리로 함께 가져옵니다(N+1 없음).
+     * owner_checked_at이 null이면 받은 털 전부가 새 털입니다. 최신순.
+     */
+    @Query("""
+            select new com.ganzithon.teolhanol.domain.worry.dto.MyWorryRow(
+                w.id, f.code, f.name, f.tabName, w.content, w.woolCount, w.status,
+                w.createdAt, w.graduatedAt, count(nw.id))
+            from WorrySheep w
+            join w.farm f
+            left join Wool nw on nw.sheep = w and (w.ownerCheckedAt is null or nw.createdAt > w.ownerCheckedAt)
+            where w.user.id = :userId and w.status in :statuses
+            group by w.id, f.code, f.name, f.tabName, w.content, w.woolCount, w.status, w.createdAt, w.graduatedAt
+            order by w.createdAt desc, w.id desc
+            """)
+    List<MyWorryRow> findMine(@Param("userId") Long userId,
+                              @Param("statuses") Collection<WorrySheepStatus> statuses);
+
     /** 기준 시각 이후 이 사용자가 만든 고민 양 수. 숨김·졸업 포함 (하루 한도 검사용, FRM-04) */
     long countByUserIdAndCreatedAtGreaterThanEqual(Long userId, LocalDateTime since);
 }
