@@ -46,7 +46,10 @@ public enum ErrorCode {
     WOOL_ALREADY_SENT(HttpStatus.CONFLICT, "WOOL_ALREADY_SENT", "이 양에게는 이미 털 한 올을 보냈어요."),
     THANKS_ALREADY_SENT(HttpStatus.CONFLICT, "THANKS_ALREADY_SENT", "이 조언에는 이미 고마운 마음을 전했어요."),
     PUSH_ENDPOINT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PUSH_ENDPOINT_NOT_ALLOWED",
-            "이 브라우저에서는 알림을 받을 수 없어요. 앱 안 알림으로 알려 드릴게요.");
+            "이 브라우저에서는 알림을 받을 수 없어요. 앱 안 알림으로 알려 드릴게요."),
+    REPORT_OWN_CONTENT(HttpStatus.BAD_REQUEST, "REPORT_OWN_CONTENT", "내가 쓴 글은 신고할 수 없어요."),
+    REPORT_DUPLICATED(HttpStatus.CONFLICT, "REPORT_DUPLICATED", "이미 신고해 주신 내용이에요. 살펴볼게요, 고마워요."),
+    THANKS_ALREADY_SENT(HttpStatus.CONFLICT, "THANKS_ALREADY_SENT", "이 조언에는 이미 고마운 마음을 전했어요.");
 
     private final HttpStatus status;
     private final String code;

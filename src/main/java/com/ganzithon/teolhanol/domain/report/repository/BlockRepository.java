@@ -13,8 +13,8 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     @Query("select count(b) > 0 from Block b where (b.blocker.id = :a and b.blocked.id = :b) or (b.blocker.id = :b and b.blocked.id = :a)")
     boolean existsBetween(@Param("a") Long a, @Param("b") Long b);
 
-    /** 내 양(숨김 제외)에 달린 조언의 보낸 사람 id. 내 양에 달린 조언이 아니면 비어 있습니다. */
-    @Query("select w.sender.id from Wool w where w.id = :woolId and w.sheep.user.id = :ownerId "
+    /** 내 양(숨김 제외)에 달린 조언(숨김 제외)의 보낸 사람 id. 내 양에 달린 조언이 아니면 비어 있습니다. */
+    @Query("select w.sender.id from Wool w where w.id = :woolId and w.sheep.user.id = :ownerId and w.hidden = false "
             + "and w.sheep.status <> com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus.HIDDEN")
     Optional<Long> findSenderIdOfReceivedWool(@Param("woolId") Long woolId, @Param("ownerId") Long ownerId);
 
