@@ -21,6 +21,9 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     @Query("select b from Block b join fetch b.blocked where b.blocker.id = :blockerId and b.blocked.id = :blockedId")
     Optional<Block> findByBlockerIdAndBlockedId(@Param("blockerId") Long blockerId, @Param("blockedId") Long blockedId);
 
+    /** 한 방향(blocker → blocked)의 차단이 있는지 */
+    boolean existsByBlockerIdAndBlockedId(Long blockerId, Long blockedId);
+
     Optional<Block> findByIdAndBlockerId(Long id, Long blockerId);
 
     /** 내가 차단한 목동 목록(최신순). 닉네임을 위해 차단 대상을 함께 가져옵니다. */

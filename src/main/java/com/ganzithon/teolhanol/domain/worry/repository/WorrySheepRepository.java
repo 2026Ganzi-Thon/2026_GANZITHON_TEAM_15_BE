@@ -24,6 +24,14 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
     @Query("select s from WorrySheep s join fetch s.user join fetch s.farm where s.id = :id")
     Optional<WorrySheep> findDetailById(@Param("id") Long id);
 
+    /**
+     * 주인이 상세를 확인한 시각만 기록합니다 (FRM-05). 잠금 없이 읽은 엔티티를 고쳐 저장하면 같은 순간의
+     * 조언 보내기(털·졸업)·신고 숨김·자동 졸업 결과를 덮어쓸 수 있으므로, owner_checked_at 열만 갱신합니다.
+     */
+    @Modifying
+    @Query("update WorrySheep s set s.ownerCheckedAt = :now where s.id = :id")
+    int markOwnerChecked(@Param("id") Long id, @Param("now") LocalDateTime now);
+
     /** 털 개수·상태를 바꿀 때 쓰는 잠금 조회 (WOL-01). 양 행만 잠급니다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from WorrySheep s where s.id = :id")
@@ -61,7 +69,7 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
                                       Pageable pageable);
     /**
      * 내 고민 목록 (FRM-05). 양마다 '확인 이후 새로 받은 털 수'를 한 번의 집계 쿼리로 함께 가져옵니다(N+1 없음).
-     * owner_checked_at이 null이면 받은 털 전부가 새 털입니다. 최신순.
+     * owner_checked_at이 null이면 받은 털 전부가 새 털입니다. 신고 누적으로 숨겨진 조언(RPT-01)은 세지 않습니다. 최신순.
      */
     @Query("""
             select new com.ganzithon.teolhanol.domain.worry.dto.MyWorryRow(
@@ -69,7 +77,8 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
                 w.createdAt, w.graduatedAt, count(nw.id))
             from WorrySheep w
             join w.farm f
-            left join Wool nw on nw.sheep = w and (w.ownerCheckedAt is null or nw.createdAt > w.ownerCheckedAt)
+            left join Wool nw on nw.sheep = w and nw.hidden = false
+                and (w.ownerCheckedAt is null or nw.createdAt > w.ownerCheckedAt)
             where w.user.id = :userId and w.status in :statuses
             group by w.id, f.code, f.name, f.tabName, w.content, w.woolCount, w.status, w.createdAt, w.graduatedAt
             order by w.createdAt desc, w.id desc
