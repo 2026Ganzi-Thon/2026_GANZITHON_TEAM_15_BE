@@ -15,6 +15,7 @@ import com.ganzithon.teolhanol.domain.diary.entity.Diary;
 import com.ganzithon.teolhanol.domain.diary.entity.Emotion;
 import com.ganzithon.teolhanol.domain.farm.entity.Farm;
 import com.ganzithon.teolhanol.domain.farm.repository.FarmRepository;
+import com.ganzithon.teolhanol.domain.notification.entity.PushSubscription;
 import com.ganzithon.teolhanol.domain.report.entity.Block;
 import com.ganzithon.teolhanol.domain.report.entity.Report;
 import com.ganzithon.teolhanol.domain.report.entity.ReportReason;
@@ -67,7 +68,7 @@ class AccountErasureTest {
     @AfterEach
     void cleanUp() {
         tx.executeWithoutResult(s -> {
-            for (String entity : new String[]{"Thanks", "Wool", "Report", "Block", "WorrySheep", "CrisisLog",
+            for (String entity : new String[]{"PushSubscription", "Thanks", "Wool", "Report", "Block", "WorrySheep", "CrisisLog",
                     "CareMessage", "CareSummary", "Diary", "MySheepItem", "MySheep", "User"}) {
                 em.createQuery("delete from " + entity).executeUpdate();
             }
@@ -175,6 +176,8 @@ class AccountErasureTest {
             em.persist(new Block(meU, otherU));
             em.persist(new Block(otherU, meU));
             em.persist(new Block(otherU, third));
+            em.persist(new PushSubscription(meU, "https://fcm.googleapis.com/fcm/send/leave", "p256dh", "auth"));
+            em.persist(new PushSubscription(otherU, "https://fcm.googleapis.com/fcm/send/stay", "p256dh", "auth"));
             ids[0] = mine.getId();
             ids[1] = theirs.getId();
             ids[2] = onMine.getId();
@@ -196,6 +199,7 @@ class AccountErasureTest {
         assertThat(count("select count(w) from Wool w where w.sender.id = :uid", me.userId())).isZero();
         assertThat(count("select count(r) from Report r where r.reporter.id = :uid", me.userId())).isZero();
         assertThat(count("select count(b) from Block b where b.blocker.id = :uid or b.blocked.id = :uid", me.userId())).isZero();
+        assertThat(count("select count(p) from PushSubscription p where p.user.id = :uid", me.userId())).isZero();
         // 내 고민에 달린 조언, 내 조언, 그에 대한 신고도 사라진다
         assertThat(count("select count(w) from Wool w where w.id in (" + ids[2] + "," + ids[3] + ")")).isZero();
         assertThat(count("select count(t) from Thanks t where t.wool.id in (" + ids[2] + "," + ids[3] + ")")).isZero();
@@ -208,6 +212,7 @@ class AccountErasureTest {
         assertThat(count("select count(t) from Thanks t where t.wool.id = " + ids[4])).isEqualTo(1);
         assertThat(count("select count(r) from Report r where r.id = " + ids[5])).isEqualTo(1);
         assertThat(count("select count(b) from Block b where b.blocker.id = :uid", other.userId())).isEqualTo(1);
+        assertThat(count("select count(p) from PushSubscription p where p.user.id = :uid", other.userId())).isEqualTo(1);
         assertThat(count("select count(d) from Diary d where d.user.id = :uid", other.userId())).isEqualTo(1);
         assertThat(count("select count(s) from MySheep s where s.user.id = :uid", other.userId())).isEqualTo(1);
     }
