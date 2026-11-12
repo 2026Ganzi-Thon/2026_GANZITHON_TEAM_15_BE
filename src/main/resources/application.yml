@@ -43,6 +43,24 @@ app:
     chat-timeout-seconds: 60
     max-retries: 2
     server-fallback: true
+  # 털 도착 알림 (WOL-02). VAPID 키가 비어 있으면 웹 푸시만 꺼지고 구독 저장과 앱 안 알림(SSE)은 동작합니다.
+  push:
+    public-key: ${VAPID_PUBLIC_KEY:}
+    private-key: ${VAPID_PRIVATE_KEY:}
+    subject: ${VAPID_SUBJECT:}
+    # 털 도착 알림을 눌렀을 때 열 프론트 경로 (FARM-05 내 고민 양 상세). {sheepId}를 양 id로 바꿉니다
+    click-url-pattern: /farm/my/{sheepId}
+    # 구독 endpoint로 받아 줄 푸시 서비스 호스트(하위 도메인 포함). 서버가 임의 주소로 요청하지 않게 막습니다
+    allowed-hosts:
+      - fcm.googleapis.com
+      - push.services.mozilla.com
+      - push.apple.com
+      - notify.windows.com
+    ttl-seconds: 86400
+    send-timeout-seconds: 5
+    sse-timeout-minutes: 30
+    sse-heartbeat-seconds: 25
+    sse-max-per-user: 5
   # 나의 양 꾸미기 아이템 고정 데이터 (SHP-03). 필요 털실은 와이어프레임 v3 ME-03 기준
   # (목도리는 화면에 값이 없어 임시 값)
   sheep-items:
@@ -71,6 +89,7 @@ app:
       daily-limit: 3
       wool-cap: 10
       auto-graduate-days: 7
+      auto-graduate-cron: "0 0 * * * *"
       page-size: 20
       protected-view-min-sent-wools: 5
       auto-hide-report-count: 3

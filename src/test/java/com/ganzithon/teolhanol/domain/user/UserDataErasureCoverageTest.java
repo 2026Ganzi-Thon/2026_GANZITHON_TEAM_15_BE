@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.ganzithon.teolhanol.domain.care.entity.CareMessage;
 import com.ganzithon.teolhanol.domain.care.entity.CareSummary;
 import com.ganzithon.teolhanol.domain.diary.entity.Diary;
+import com.ganzithon.teolhanol.domain.notification.entity.PushSubscription;
 import com.ganzithon.teolhanol.domain.report.entity.Block;
 import com.ganzithon.teolhanol.domain.report.entity.Report;
 import com.ganzithon.teolhanol.domain.safety.entity.CrisisLog;
@@ -34,7 +35,8 @@ class UserDataErasureCoverageTest {
 
     /** User를 직접 참조하는 엔티티 (사용자 삭제 전에 지워야 함) */
     private static final Set<Class<?>> USER_OWNED = Set.of(
-            Diary.class, MySheep.class, CrisisLog.class, WorrySheep.class, Wool.class, Report.class, Block.class);
+            Diary.class, MySheep.class, CrisisLog.class, WorrySheep.class, Wool.class, Report.class, Block.class,
+            PushSubscription.class);
     /**
      * 위 엔티티 중 하나를 참조하는 자식 엔티티 (부모보다 먼저 지워야 함).
      * Wool은 사용자(보낸 사람)와 고민 양을 모두 참조하므로 두 목록에 다 들어갑니다.

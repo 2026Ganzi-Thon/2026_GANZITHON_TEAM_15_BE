@@ -17,6 +17,7 @@ erDiagram
     users ||--o{ reports : "신고"
     users ||--o{ blocks : "차단"
     users ||--o{ crisis_logs : "위험도 판정 로그"
+    users ||--o{ push_subscriptions : "웹 푸시 구독"
 
     users {
         bigint id PK
@@ -81,6 +82,7 @@ erDiagram
         int stage
         varchar status
         datetime graduated_at
+        datetime owner_checked_at
     }
     wools {
         bigint id PK
@@ -88,6 +90,7 @@ erDiagram
         bigint sender_id FK
         varchar content
         boolean sent_as_is
+        boolean hidden
     }
     thanks {
         bigint id PK
@@ -105,6 +108,13 @@ erDiagram
         bigint id PK
         bigint blocker_id FK
         bigint blocked_id FK
+    }
+    push_subscriptions {
+        bigint id PK
+        bigint user_id FK
+        varchar endpoint UK
+        varchar p256dh
+        varchar auth
     }
     crisis_logs {
         bigint id PK
@@ -143,6 +153,9 @@ erDiagram
 - `diaries.crisis_detected`, `diaries.user_message_count`: 위기 대화는 털 없음, 사용자 메시지 3회부터 털 쌓기 (SAF-02, CARE-02)
 - `farms.tab_name`: 목장 화면 주제 탭 이름
 - `wools.sent_as_is`: 어조 제안을 받고도 그대로 보낸 조언 (SAF-04)
+- `wools.hidden`: 신고 누적으로 숨긴 조언. 주인 상세의 받은 조언 목록에서 빠짐 (RPT-01)
+- `worry_sheep.owner_checked_at`: 주인이 마지막으로 상세를 본 시각. 내 고민의 '새 털 n올' 계산에 사용 (FRM-05)
+- `push_subscriptions`: 웹 푸시 구독. endpoint는 UNIQUE이고 탈퇴 때 함께 삭제 (WOL-02)
 - `users.login_fail_count`, `users.locked_until`: 로그인 실패 5회 시 5분 잠금 (ACC-02)
 - `users.crisis_banner_until`: 위기 판정 후 24시간 상담 배너, '위험해 보여요' 신고 배너 (SAF-02, RPT-01)
 - `safety_patterns.category`에 `CRISIS_KEYWORD` 추가: 위기 키워드 사전 (SAF-01)
