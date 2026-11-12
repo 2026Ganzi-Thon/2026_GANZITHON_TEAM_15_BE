@@ -243,6 +243,20 @@ class WoolSendApiTest {
         assertThat(output.getAll()).doesNotContain("로그비밀조언문장");
     }
 
+    @Test
+    void 보내기_로그에는_보낸_사람_id가_없다(CapturedOutput output) throws Exception {
+        WorrySheep sheep = sheep(RiskLevel.SAFE);
+        send(me, sheep, "010-1234-5678로 연락 주세요", null).andExpect(jsonPath("$.data.status").value("BLOCKED"));
+        send(me, sheep, "씨발 그냥 참아요", null).andExpect(jsonPath("$.data.status").value("BLOCKED"));
+        send(me, sheep, "응원할게요", null).andExpect(status().isCreated());
+
+        String logs = output.getAll();
+        assertThat(logs).contains("조언 보내기 개인정보 패턴으로 저장하지 않음 sheepId=" + sheep.getId())
+                .contains("조언 보내기 막음 sheepId=" + sheep.getId())
+                .contains("조언 보냄 sheepId=" + sheep.getId());
+        assertThat(logs).doesNotContain("senderId");
+    }
+
     // ---- 권한 ----
 
     @Test
@@ -395,6 +409,34 @@ class WoolSendApiTest {
         assertThat(woolRepository.count()).isZero();
 
         send(me, sheep, "  " + "가".repeat(100) + "  ", null).andExpect(status().isCreated());
+    }
+
+    @Test
+    void 이모지도_한_글자로_세어_백자_경계를_지킨다() throws Exception {
+        WorrySheep sheep = sheep(RiskLevel.SAFE);
+        // 코드 포인트 101개(이모지 1개 포함)는 400
+        send(me, sheep, "가".repeat(100) + "🐑", null).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value("조언은 1자에서 100자 사이로 적어 주세요."));
+        assertThat(woolRepository.count()).isZero();
+
+        // 코드 포인트 100개는 UTF-16 길이가 100을 넘어도 길이 검사를 통과한다.
+        // (H2 의 VARCHAR 는 UTF-16 단위로 길이를 재서 저장까지는 확인할 수 없으므로, 길이 검사 다음 단계인
+        //  어조 제안 응답으로 통과를 확인합니다. 운영 MySQL utf8mb4 의 varchar(100)은 문자(코드 포인트) 100개까지 담습니다.)
+        String boundary = "가".repeat(99) + "🐑";
+        assertThat(boundary.length()).isEqualTo(101);
+        llmReturns("LECTURE", "지금은 쉬어 가도 괜찮아요.");
+        send(me, sheep, boundary, false).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("SUGGEST"));
+        String allEmoji = "🐑".repeat(100);
+        send(me, sheep, allEmoji, false).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("SUGGEST"));
+        assertThat(woolRepository.count()).isZero();
+
+        // 이모지가 든 조언은 그대로 저장된다(H2 에도 들어가는 길이)
+        llmReturns("NONE", null);
+        String withEmoji = "가".repeat(98) + "🐑";
+        send(me, sheep, withEmoji, null).andExpect(status().isCreated());
+        assertThat(woolsOf(sheep)).extracting(Wool::getContent).containsExactly(withEmoji);
     }
 
     // ---- 다시 확인 (SAF-04, SAF-05) ----

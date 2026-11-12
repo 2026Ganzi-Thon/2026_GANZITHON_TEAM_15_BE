@@ -353,6 +353,29 @@ class WorryPostApiTest {
         assertThat(onlySheep().getContent()).hasSize(200);
     }
 
+    @Test
+    void 이모지도_한_글자로_세어_이백자_경계를_지킨다() throws Exception {
+        // 코드 포인트 201개(이모지 1개 포함)는 400
+        postWorry("CAREER", "가".repeat(200) + "🐑").andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+        assertThat(worrySheepRepository.count()).isZero();
+
+        // 코드 포인트 200개는 UTF-16 길이가 200을 넘어도 길이 검사를 통과한다.
+        // (H2 의 VARCHAR 는 UTF-16 단위로 길이를 재서 저장까지는 확인할 수 없으므로, 길이 검사 다음 단계인
+        //  개인정보 거절 응답으로 통과를 확인합니다. 운영 MySQL utf8mb4 의 varchar(200)은 문자(코드 포인트) 200개까지 담습니다.)
+        String boundary = "010-1234-5678 " + "가".repeat(185) + "🐑";
+        assertThat(boundary.codePointCount(0, boundary.length())).isEqualTo(200);
+        assertThat(boundary.length()).isEqualTo(201);
+        postWorry("CAREER", boundary).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PII_REJECTED"));
+        assertThat(worrySheepRepository.count()).isZero();
+
+        // 이모지가 든 본문은 그대로 저장된다(H2 에도 들어가는 길이)
+        String withEmoji = "가".repeat(198) + "🐑";
+        postWorry("CAREER", withEmoji).andExpect(status().isCreated());
+        assertThat(onlySheep().getContent()).isEqualTo(withEmoji);
+    }
+
     // ---- 목장 ----
 
     @Test

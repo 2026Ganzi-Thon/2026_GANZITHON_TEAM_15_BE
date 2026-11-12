@@ -83,7 +83,8 @@ public class WorryPostService {
     private String validContent(String rawContent) {
         String content = rawContent == null ? "" : rawContent.strip();
         int max = policy.worry().maxLength();
-        if (content.isEmpty() || content.length() > max) {
+        // 이모지 등도 한 글자로 셉니다(AdviceChecker·DB utf8mb4 varchar 문자 수와 같은 코드 포인트 기준).
+        if (content.isEmpty() || content.codePointCount(0, content.length()) > max) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "고민은 1자에서 " + max + "자 사이로 적어 주세요.");
         }
         return content;

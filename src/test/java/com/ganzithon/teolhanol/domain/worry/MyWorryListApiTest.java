@@ -179,6 +179,29 @@ class MyWorryListApiTest {
     }
 
     @Test
+    void 신고로_숨겨진_조언은_새_털_수에_세지_않는다() throws Exception {
+        WorrySheep sheep = sheep(me, "CAREER", "숨긴 조언이 있는 고민");
+        TestUsers.Login third = testUsers.signIn("third24@test.com", "세번째목동");
+        wool(sheep, other);
+        Wool hiddenWool = woolRepository.saveAndFlush(new Wool(sheep, user(third), "숨겨질 조언", false));
+        hiddenWool.hide();
+        woolRepository.saveAndFlush(hiddenWool);
+
+        list(me, "").andExpect(jsonPath("$.data.sheep[?(@.sheepId==" + sheep.getId() + ")].newWoolCount").value(1));
+
+        // 확인한 뒤 새로 온 조언이 숨겨져도 세지 않는다
+        pause();
+        mockMvc.perform(get("/worry-sheep/" + sheep.getId()).header("Authorization", me.bearer()))
+                .andExpect(status().isOk());
+        pause();
+        TestUsers.Login fourth = testUsers.signIn("fourth24@test.com", "네번째목동");
+        Wool lateHidden = woolRepository.saveAndFlush(new Wool(sheep, user(fourth), "늦게 온 숨김 조언", false));
+        lateHidden.hide();
+        woolRepository.saveAndFlush(lateHidden);
+        list(me, "").andExpect(jsonPath("$.data.sheep[?(@.sheepId==" + sheep.getId() + ")].newWoolCount").value(0));
+    }
+
+    @Test
     void 로그인하지_않으면_401() throws Exception {
         mockMvc.perform(get("/worry-sheep/me")).andExpect(status().isUnauthorized());
     }

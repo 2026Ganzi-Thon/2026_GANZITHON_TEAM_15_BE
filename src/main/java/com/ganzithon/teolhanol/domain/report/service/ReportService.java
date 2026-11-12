@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>서로 다른 신고자의 신고가 app.policy.worry.auto-hide-report-count 회 쌓이면 대상을 숨깁니다.
  *       조언을 숨겨도 양에 이미 쌓인 털 수는 줄이지 않습니다.</li>
  *   <li>'위험해 보여요'는 1회만으로 글쓴이에게 상담 안내 배너를 켭니다(누적 숨김에도 1회로 셉니다).</li>
- *   <li>blockUser=true 면 글쓴이를 함께 차단합니다(#36, 멱등).</li>
+ *   <li>blockUser=true 면 글쓴이를 함께 차단합니다(#36, 멱등). 차단은 별도 트랜잭션이라 차단 경쟁으로 신고가 실패하지 않습니다.</li>
  * </ul>
  * 글쓴이의 user_id와 본문은 응답·로그에 남기지 않습니다.
  */
@@ -77,6 +77,16 @@ public class ReportService {
             throw new BusinessException(ErrorCode.REPORT_DUPLICATED);
         }
 
+        boolean blocked = false;
+        if (request.blockUserOrFalse()) {
+            // 차단은 BlockWriter 의 별도 트랜잭션에서 저장합니다. 같은 차단이 동시에 들어와 UNIQUE 위반이 나도
+            // 그 트랜잭션만 롤백되고 기존 차단을 돌려주므로, 신고는 실패하지 않고 blocked 는 차단 행이 있으면 true 입니다.
+            // 글쓴이 사용자 행을 잠그는 배너(activateCrisisBanner)보다 먼저 해야, 차단 행 저장의 외래 키 확인이
+            // 이 트랜잭션의 행 잠금을 기다리지 않습니다(InnoDB).
+            blockService.blockUser(reporterId, target.authorId());
+            blocked = true;
+        }
+
         if (request.reason() == ReportReason.LOOKS_DANGEROUS) {
             activateCrisisBanner(target.authorId());
         }
@@ -85,13 +95,6 @@ public class ReportService {
         if (reportRepository.countByTargetTypeAndTargetId(type, targetId) >= policy.worry().autoHideReportCount()) {
             target.hide().run();
             hidden = true;
-        }
-
-        boolean blocked = false;
-        if (request.blockUserOrFalse()) {
-            // blockUser 는 기존 차단을 먼저 조회한 뒤에만 저장하므로, 이미 차단한 목동이어도 UNIQUE 위반 없이 멱등입니다.
-            blockService.blockUser(reporterId, target.authorId());
-            blocked = true;
         }
 
         log.info("신고 접수: reportId={}, targetType={}, reason={}, hidden={}, blocked={}",

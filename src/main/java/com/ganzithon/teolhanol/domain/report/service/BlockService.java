@@ -4,7 +4,6 @@ import com.ganzithon.teolhanol.domain.report.dto.BlockCreateRequest;
 import com.ganzithon.teolhanol.domain.report.dto.BlockResponse;
 import com.ganzithon.teolhanol.domain.report.entity.Block;
 import com.ganzithon.teolhanol.domain.report.repository.BlockRepository;
-import com.ganzithon.teolhanol.domain.user.repository.UserRepository;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
 import com.ganzithon.teolhanol.domain.worry.repository.WorrySheepRepository;
@@ -27,7 +26,7 @@ public class BlockService {
     }
 
     private final BlockRepository blockRepository;
-    private final UserRepository userRepository;
+    private final BlockWriter blockWriter;
     private final WorrySheepRepository worrySheepRepository;
     private final WorrySheepAccess access;
 
@@ -48,22 +47,19 @@ public class BlockService {
         return blockUserWithResult(blockerId, targetUserId).block();
     }
 
+    /**
+     * 저장은 {@link BlockWriter}의 새 트랜잭션에서 합니다. 신고처럼 바깥 트랜잭션 안에서 불려도
+     * 동시 차단의 UNIQUE 위반이 바깥 트랜잭션을 rollback-only 로 만들지 않습니다.
+     */
     private Result blockUserWithResult(Long blockerId, Long targetUserId) {
         if (blockerId.equals(targetUserId)) {
             throw new BusinessException(ErrorCode.BLOCK_SELF);
         }
-        var existing = blockRepository.findByBlockerIdAndBlockedId(blockerId, targetUserId);
-        if (existing.isPresent()) {
-            return new Result(existing.get(), false);
-        }
         try {
-            blockRepository.saveAndFlush(new Block(
-                    userRepository.getReferenceById(blockerId), userRepository.getReferenceById(targetUserId)));
-            // 닉네임(지연 로딩)까지 읽을 수 있게 다시 조회합니다.
-            return new Result(blockRepository.findByBlockerIdAndBlockedId(blockerId, targetUserId).orElseThrow(), true);
+            return blockWriter.insertIfAbsent(blockerId, targetUserId);
         } catch (DataIntegrityViolationException e) {
-            // 동시에 같은 차단이 들어온 경우: 기존 차단을 돌려줍니다.
-            Block winner = blockRepository.findByBlockerIdAndBlockedId(blockerId, targetUserId).orElseThrow(() -> e);
+            // 동시에 같은 차단이 먼저 저장된 경우: 그 저장 트랜잭션만 롤백됐으니 새 트랜잭션에서 기존 차단을 찾습니다.
+            Block winner = blockWriter.find(blockerId, targetUserId).orElseThrow(() -> e);
             return new Result(winner, false);
         }
     }
@@ -82,7 +78,8 @@ public class BlockService {
 
     /**
      * 숨김·졸업 양과 볼 수 없는 보호 양은 없는 양처럼 404 입니다(닉네임을 흘리지 않도록, {@link WorrySheepAccess} 기준).
-     * 이미 차단한 목동을 다시 차단하면 기존 차단을 돌려줘야 하므로 차단 관계는 여기서 보지 않습니다.
+     * 차단 관계는 방향을 나눠 봅니다. 내가 이미 차단한 목동(blocker → owner)은 기존 차단을 돌려줘야 하므로 통과시키고,
+     * 나를 차단한 목동(owner → blocker)의 양은 내게 보이지 않아야 하므로 404 입니다.
      */
     private Long ownerOfViewableSheep(Long blockerId, Long sheepId) {
         WorrySheep sheep = worrySheepRepository.findDetailById(sheepId)
@@ -90,11 +87,18 @@ public class BlockService {
         if (sheep.getStatus() != WorrySheepStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
-        if (!access.isOwner(sheep, blockerId)
-                && !access.canSeeRisk(sheep, blockerId, access.hasSent(sheepId, blockerId))) {
+        Long ownerId = sheep.getUser().getId();
+        if (access.isOwner(sheep, blockerId)) {
+            return ownerId;
+        }
+        if (!access.canSeeRisk(sheep, blockerId, access.hasSent(sheepId, blockerId))) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
-        return sheep.getUser().getId();
+        if (!blockRepository.existsByBlockerIdAndBlockedId(blockerId, ownerId)
+                && blockRepository.existsByBlockerIdAndBlockedId(ownerId, blockerId)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND);
+        }
+        return ownerId;
     }
 
     /** 받은 조언만 보이므로, 조언이 달린 양의 주인만 그 조언의 보낸 사람을 차단할 수 있습니다. */
