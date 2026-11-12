@@ -6,6 +6,7 @@ import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import java.util.Collection;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +43,6 @@ public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
                                       @Param("farmId") Long farmId,
                                       @Param("visibleRiskLevels") Collection<RiskLevel> visibleRiskLevels,
                                       Pageable pageable);
+    /** 기준 시각 이후 이 사용자가 만든 고민 양 수. 숨김·졸업 포함 (하루 한도 검사용, FRM-04) */
+    long countByUserIdAndCreatedAtGreaterThanEqual(Long userId, LocalDateTime since);
 }
