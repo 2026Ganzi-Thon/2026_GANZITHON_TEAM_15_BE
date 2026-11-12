@@ -31,7 +31,11 @@ public enum ErrorCode {
 
     // 나의 양 꾸미기 (A)
     YARN_NOT_ENOUGH(HttpStatus.CONFLICT, "SHEEP_YARN_NOT_ENOUGH", "털실이 조금 모자라요. 다른 목동에게 조언을 보내면 털실을 모을 수 있어요."),
-    ITEM_NOT_OWNED(HttpStatus.CONFLICT, "SHEEP_ITEM_NOT_OWNED", "아직 만들지 않은 아이템이에요. 먼저 털실로 만들어 주세요.");
+    ITEM_NOT_OWNED(HttpStatus.CONFLICT, "SHEEP_ITEM_NOT_OWNED", "아직 만들지 않은 아이템이에요. 먼저 털실로 만들어 주세요."),
+
+    // 고민 목장·안전·신고 (B)
+    PII_DETECTED(HttpStatus.BAD_REQUEST, "SAFETY_PII_DETECTED",
+            "전화번호나 계정 아이디 같은 연락처는 남기지 않도록 해 주세요. 그 부분만 빼고 다시 적어 주시면 좋아요.");
 
     private final HttpStatus status;
     private final String code;
