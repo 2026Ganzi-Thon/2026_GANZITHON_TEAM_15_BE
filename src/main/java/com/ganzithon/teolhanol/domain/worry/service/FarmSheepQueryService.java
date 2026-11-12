@@ -31,8 +31,6 @@ public class FarmSheepQueryService {
 
     /** 전체 탭을 뜻하는 farmCode */
     public static final String ALL = "ALL";
-    private static final int PREVIEW_LENGTH = 40;
-    private static final String ELLIPSIS = "…";
 
     private final WorrySheepRepository worrySheepRepository;
     private final FarmRepository farmRepository;
@@ -73,12 +71,7 @@ public class FarmSheepQueryService {
                 preview(row.content()), row.nickname(), row.createdAt(), row.alreadySent());
     }
 
-    /** 고민 앞부분 40자. 넘으면 "…"를 붙입니다. 이모지가 반으로 잘리지 않도록 코드 포인트 기준으로 자릅니다. */
     private String preview(String content) {
-        String text = content.strip();
-        if (text.codePointCount(0, text.length()) <= PREVIEW_LENGTH) {
-            return text;
-        }
-        return text.substring(0, text.offsetByCodePoints(0, PREVIEW_LENGTH)) + ELLIPSIS;
+        return WorryPreview.of(content);
     }
 }

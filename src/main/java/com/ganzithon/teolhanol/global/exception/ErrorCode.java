@@ -38,7 +38,12 @@ public enum ErrorCode {
             "전화번호나 계정 아이디 같은 연락처는 남기지 않도록 해 주세요. 그 부분만 빼고 다시 적어 주시면 좋아요."),
     FARM_NOT_FOUND(HttpStatus.NOT_FOUND, "FARM_NOT_FOUND", "찾으시는 목장이 없어요. 목장 목록에서 다시 골라 주세요."),
     WORRY_DAILY_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "WORRY_DAILY_LIMIT_EXCEEDED",
-            "오늘은 고민을 충분히 들려주셨어요. 내일 다시 들려주세요.");
+            "오늘은 고민을 충분히 들려주셨어요. 내일 다시 들려주세요."),
+    BLOCK_SELF(HttpStatus.BAD_REQUEST, "BLOCK_SELF", "나 자신은 차단할 수 없어요."),
+    WORRY_SHEEP_GRADUATED(HttpStatus.CONFLICT, "WORRY_SHEEP_GRADUATED", "이 양은 방금 목장을 떠났어요."),
+    WOOL_OWN_SHEEP(HttpStatus.FORBIDDEN, "WOOL_OWN_SHEEP",
+            "내 고민 양에는 털을 보낼 수 없어요. 다른 목동의 양을 둘러봐 주세요."),
+    WOOL_ALREADY_SENT(HttpStatus.CONFLICT, "WOOL_ALREADY_SENT", "이 양에게는 이미 털 한 올을 보냈어요.");
 
     private final HttpStatus status;
     private final String code;
