@@ -9,6 +9,8 @@ spring:
       ddl-auto: create-drop
 
 app:
+  scheduling:
+    enabled: false
   cors:
     allowed-origins: http://localhost:3000
   crypto:
