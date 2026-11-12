@@ -3,6 +3,7 @@ package com.ganzithon.teolhanol.domain.farm.repository;
 import com.ganzithon.teolhanol.domain.farm.dto.FarmResponse;
 import com.ganzithon.teolhanol.domain.farm.entity.Farm;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -20,4 +21,6 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
             order by f.sortOrder
             """)
     List<FarmResponse> findAllWithWaitingCount();
+
+    Optional<Farm> findByCode(String code);
 }

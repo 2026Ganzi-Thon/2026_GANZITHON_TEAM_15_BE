@@ -15,7 +15,7 @@ public class FarmService {
 
     @Transactional(readOnly = true)
     public List<FarmResponse> list() {
-        // TODO(#21): 보호 양·차단·내 양 제외 같은 사용자별 조건은 풀밭 조회에서 적용합니다.
+        // 보호 양·차단·내 양 제외 같은 사용자별 조건은 풀밭 조회(FarmSheepQueryService)에서 적용합니다.
         return farmRepository.findAllWithWaitingCount();
     }
 }
