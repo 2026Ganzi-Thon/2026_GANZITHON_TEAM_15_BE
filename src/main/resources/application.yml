@@ -71,6 +71,7 @@ app:
       daily-limit: 3
       wool-cap: 10
       auto-graduate-days: 7
+      auto-graduate-cron: "0 0 * * * *"
       page-size: 20
       protected-view-min-sent-wools: 5
       auto-hide-report-count: 3
