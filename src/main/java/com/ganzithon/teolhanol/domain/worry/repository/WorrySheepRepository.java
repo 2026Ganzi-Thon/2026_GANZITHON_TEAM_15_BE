@@ -2,6 +2,7 @@ package com.ganzithon.teolhanol.domain.worry.repository;
 
 import com.ganzithon.teolhanol.domain.worry.dto.FarmSheepRow;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
+import java.util.Optional;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import java.util.Collection;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface WorrySheepRepository extends JpaRepository<WorrySheep, Long> {
 
+    /** 상세 화면용: 작성자와 목장을 함께 가져옵니다. */
+    @Query("select s from WorrySheep s join fetch s.user join fetch s.farm where s.id = :id")
+    Optional<WorrySheep> findDetailById(@Param("id") Long id);
     /**
      * 풀밭 양 목록 (FRM-01). 작성자 닉네임과 '이미 보냄' 여부를 한 쿼리로 가져오고, 정렬·페이지도 DB에서 합니다.
      * 제외: ACTIVE가 아닌 양, 내 양, 차단 관계(양방향) 사용자의 양, visibleRiskLevels에 없는 위험도의 양.
