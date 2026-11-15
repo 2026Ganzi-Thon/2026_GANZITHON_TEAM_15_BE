@@ -61,6 +61,7 @@ Swagger: `https://<도메인>/swagger-ui.html` (`.env`의 `SWAGGER_ENABLED=false
 - 스키마: 운영도 `ddl-auto: update`로 엔티티 기준으로 맞춥니다 (`JPA_DDL_AUTO`로 변경 가능).
 - 같은 EC2에 MySQL 컨테이너를 함께 띄웁니다. RDS를 쓰려면 `.env`의 `DB_URL`을 RDS 주소로 채우고 compose의 `mysql` 서비스를 지우세요.
 - HTTPS는 compose의 `caddy` 컨테이너가 처리합니다(Let's Encrypt 자동 발급·갱신). 도메인은 `.env`의 `DOMAIN`(기본 `teolhanol-api.duckdns.org`)이고, DNS A 레코드가 EC2 IP를 가리켜야 합니다. 앱은 `127.0.0.1:8080`으로만 열려 있어 바깥에서는 Caddy를 통해서만 접근합니다.
+- CORS: `.env`의 `CORS_ALLOWED_ORIGINS`에 쉼표로 구분해 정확한 주소와 `*` 패턴을 함께 쓸 수 있습니다. 예: `CORS_ALLOWED_ORIGINS=https://<프로젝트>.vercel.app,https://*.vercel.app,http://localhost:5173` (프리뷰 배포까지 허용하려면 패턴). 비우면 어떤 출처도 허용하지 않고, `*` 하나만 쓴 값은 무시됩니다. 값을 바꾼 뒤에는 컨테이너를 다시 시작해야 합니다.
 - 로그 보기: `cd ~/teolhanol && docker compose -f docker-compose.prod.yml logs -f app`
 - 이전 버전으로 되돌리기: `IMAGE_TAG=sha-<커밋 7자리> docker compose -f docker-compose.prod.yml up -d`
 - 대회 규정상 11/20 23:59 이후 커밋이 있으면 실격입니다. 자동 커밋·자동 PR을 만드는 도구(Dependabot 등)는 쓰지 않습니다. CI/CD는 커밋을 만들지 않습니다.
