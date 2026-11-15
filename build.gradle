@@ -28,6 +28,15 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-gson:0.13.0'
+	// 웹 푸시(WOL-02): VAPID 서명과 RFC 8291 암호화만 라이브러리로 하고, 전송은 JDK HttpClient로 합니다.
+	// 쓰지 않는 Netty 기반 비동기 클라이언트·CLI는 빼고, BouncyCastle은 라이브러리가 요구해 직접 추가합니다.
+	implementation('nl.martijndwars:web-push:5.1.1') {
+		exclude group: 'org.asynchttpclient'
+		exclude group: 'com.beust'
+		exclude group: 'org.bitbucket.b_c'
+	}
+	implementation 'org.bitbucket.b_c:jose4j:0.9.6'
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.82'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
