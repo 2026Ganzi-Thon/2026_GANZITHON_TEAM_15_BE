@@ -12,7 +12,7 @@ EC2 배포 단계는 저장소 변수 `DEPLOY_ENABLED`가 `true`일 때만 실�
 ## 1. EC2 준비 (한 번만)
 
 1. Ubuntu 24.04 인스턴스 생성 (t3.small 이상 권장, MySQL을 같이 띄우므로 메모리 2GB 이상)
-2. 보안 그룹 인바운드: `22`(SSH, 가능하면 팀 IP만), `80`(HTTP)
+2. 보안 그룹 인바운드: `22`(SSH, 가능하면 팀 IP만), `80`(HTTP, 인증서 발급용), `443`(HTTPS)
 3. Docker 설치
 
    ```bash
@@ -50,17 +50,17 @@ Settings → Environments에 `production` 환경이 자동으로 생깁니다. �
 ## 3. 배포 확인
 
 ```bash
-curl http://<EC2_HOST>/health
+curl https://<도메인>/health
 # {"success":true,"data":"ok"}
 ```
 
-Swagger: `http://<EC2_HOST>/swagger-ui.html` (`.env`의 `SWAGGER_ENABLED=false`로 끌 수 있음)
+Swagger: `https://<도메인>/swagger-ui.html` (`.env`의 `SWAGGER_ENABLED=false`로 끌 수 있음)
 
 ## 운영 메모
 
 - 스키마: 운영도 `ddl-auto: update`로 엔티티 기준으로 맞춥니다 (`JPA_DDL_AUTO`로 변경 가능).
 - 같은 EC2에 MySQL 컨테이너를 함께 띄웁니다. RDS를 쓰려면 `.env`의 `DB_URL`을 RDS 주소로 채우고 compose의 `mysql` 서비스를 지우세요.
-- 프론트엔드가 HTTPS로 배포되면 브라우저가 HTTP API 호출을 막습니다(mixed content). 그 경우 도메인을 연결하고 앞단에 HTTPS(예: Caddy, 로드밸런서)를 붙여야 합니다.
+- HTTPS는 compose의 `caddy` 컨테이너가 처리합니다(Let's Encrypt 자동 발급·갱신). 도메인은 `.env`의 `DOMAIN`(기본 `teolhanol-api.duckdns.org`)이고, DNS A 레코드가 EC2 IP를 가리켜야 합니다. 앱은 `127.0.0.1:8080`으로만 열려 있어 바깥에서는 Caddy를 통해서만 접근합니다.
 - 로그 보기: `cd ~/teolhanol && docker compose -f docker-compose.prod.yml logs -f app`
 - 이전 버전으로 되돌리기: `IMAGE_TAG=sha-<커밋 7자리> docker compose -f docker-compose.prod.yml up -d`
 - 대회 규정상 11/20 23:59 이후 커밋이 있으면 실격입니다. 자동 커밋·자동 PR을 만드는 도구(Dependabot 등)는 쓰지 않습니다. CI/CD는 커밋을 만들지 않습니다.
