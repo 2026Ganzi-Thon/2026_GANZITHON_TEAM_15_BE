@@ -15,6 +15,7 @@ import com.ganzithon.teolhanol.global.exception.BusinessException;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
 import com.ganzithon.teolhanol.global.policy.PolicyProperties;
 import com.ganzithon.teolhanol.global.policy.SheepStage;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,8 @@ public class WorrySheepDetailService {
     private final UserRepository userRepository;
     private final PolicyProperties policy;
 
-    @Transactional(readOnly = true)
+    /** 주인이 조회하면 '확인한 시각'을 남기므로 쓰기 트랜잭션입니다. */
+    @Transactional
     public WorrySheepDetailResponse get(Long viewerId, Long sheepId) {
         WorrySheep sheep = worrySheepRepository.findDetailById(sheepId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -55,8 +57,10 @@ public class WorrySheepDetailService {
 
         List<WorrySheepDetailResponse.WoolItem> wools = null;
         if (mine) {
-            // TODO(#24): 주인 확인 시각 기록
+            // 조회 직전 시각을 기록해, 조회 도중 도착한 털이 '새 털'에서 빠지지 않게 합니다.
+            LocalDateTime checkedAt = LocalDateTime.now();
             wools = receivedWools(sheepId);
+            sheep.markOwnerChecked(checkedAt);
         }
 
         SheepStage stage = SheepStage.ofWorrySheep(sheep.getWoolCount());
