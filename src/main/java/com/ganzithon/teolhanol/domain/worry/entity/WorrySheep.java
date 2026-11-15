@@ -23,18 +23,24 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 /**
  * 고민 양. 털 없는 양으로 태어나 다른 사용자의 조언을 받으며 풍성해집니다 (FRM-04).
  * risk_level이 CAUTION이면 '보호 양'으로, 조언 이력이 충분한 사용자에게만 보입니다.
  * (farm_id, status, wool_count, created_at) 인덱스로 '털 적은 양 먼저' 조회를 지원합니다 (FRM-02).
+ * 조언 보내기·신고 숨김·자동 졸업이 같은 행을 바꾸므로, 바뀐 열만 UPDATE 하도록 {@code @DynamicUpdate}를 붙입니다.
+ * 주인 확인 시각은 엔티티를 고치지 않고 {@code WorrySheepRepository#markOwnerChecked}로 그 열만 갱신합니다.
  */
 @Getter
 @Entity
 @Table(name = "worry_sheep", indexes = {
         @Index(name = "idx_worry_farm_status_wool_created", columnList = "farm_id, status, wool_count, created_at"),
-        @Index(name = "idx_worry_user_created", columnList = "user_id, created_at")
+        @Index(name = "idx_worry_user_created", columnList = "user_id, created_at"),
+        // 기간 경과 자동 졸업 벌크 UPDATE(status = ACTIVE and created_at <= ?)용 (FRM-06)
+        @Index(name = "idx_worry_status_created", columnList = "status, created_at")
 })
+@DynamicUpdate
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorrySheep extends BaseTimeEntity {
 
@@ -88,11 +94,6 @@ public class WorrySheep extends BaseTimeEntity {
     public void graduate() {
         this.status = WorrySheepStatus.GRADUATED;
         this.graduatedAt = LocalDateTime.now();
-    }
-
-    /** 주인이 상세를 확인했음을 기록합니다 (FRM-05). */
-    public void markOwnerChecked(LocalDateTime now) {
-        this.ownerCheckedAt = now;
     }
 
     /** 운영 정책·신고로 목장에서 숨깁니다. */

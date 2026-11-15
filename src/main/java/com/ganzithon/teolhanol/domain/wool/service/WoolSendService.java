@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
  * 조언(털) 보내기 (WOL-01, SAF-04, SAF-05).
  * 순서: 길이 → 양 조회·권한 → 개인정보 → 조언 다시 확인(금칙어 + LLM 어조) → 저장.
  * LLM 확인은 트랜잭션 밖에서 하고, 저장만 {@link WoolSendWriter}의 짧은 트랜잭션에서 합니다.
- * 조언 본문과 바꿀 문장은 로그에 남기지 않습니다.
+ * 조언 본문과 바꿀 문장은 로그에 남기지 않습니다. 누가 어느 양에 무엇을 시도했는지 이어지지 않도록 보낸 사람 id도 남기지 않습니다.
  */
 @Slf4j
 @Service
@@ -37,13 +37,13 @@ public class WoolSendService {
         writer.checkSendable(senderId, sheepId);
 
         if (piiDetector.containsPii(content)) {
-            log.info("조언 보내기 개인정보 패턴으로 저장하지 않음 sheepId={} senderId={}", sheepId, senderId);
+            log.info("조언 보내기 개인정보 패턴으로 저장하지 않음 sheepId={}", sheepId);
             return WoolSendResponse.blocked(WoolSendResponse.PII_CATEGORY, ErrorCode.PII_DETECTED.getMessage());
         }
 
         AdviceCheckResult check = adviceChecker.check(content);
         if (check.status() == AdviceCheckStatus.BLOCKED) {
-            log.info("조언 보내기 막음 sheepId={} senderId={} category={}", sheepId, senderId, check.category());
+            log.info("조언 보내기 막음 sheepId={} category={}", sheepId, check.category());
             return WoolSendResponse.blocked(check.category().name(), check.category().getMessage());
         }
         boolean asIs = Boolean.TRUE.equals(sendAsIs);
@@ -72,7 +72,8 @@ public class WoolSendService {
     private String validContent(String rawContent) {
         String content = rawContent == null ? "" : rawContent.strip();
         int max = policy.wool().maxLength();
-        if (content.isEmpty() || content.length() > max) {
+        // 이모지 등도 한 글자로 셉니다(AdviceChecker·DB utf8mb4 varchar 문자 수와 같은 코드 포인트 기준).
+        if (content.isEmpty() || content.codePointCount(0, content.length()) > max) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "조언은 1자에서 " + max + "자 사이로 적어 주세요.");
         }
         return content;

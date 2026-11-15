@@ -44,7 +44,8 @@ public class WorrySheepDetailService {
             // 조회 직전 시각을 기록해, 조회 도중 도착한 털이 '새 털'에서 빠지지 않게 합니다.
             LocalDateTime checkedAt = LocalDateTime.now();
             wools = receivedWools(sheepId);
-            sheep.markOwnerChecked(checkedAt);
+            // 엔티티를 고치지 않고 그 열만 갱신합니다(잠금 없이 읽은 상태·털 수로 덮어쓰지 않도록).
+            worrySheepRepository.markOwnerChecked(sheepId, checkedAt);
         }
 
         SheepStage stage = SheepStage.ofWorrySheep(sheep.getWoolCount());

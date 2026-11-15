@@ -191,6 +191,29 @@ class BlockApiTest {
     }
 
     @Test
+    void 나를_차단한_목동의_양으로는_차단할_수_없고_닉네임도_나오지_않는다() throws Exception {
+        WorrySheep theirs = sheep(shepherd);
+        blockRepository.saveAndFlush(new com.ganzithon.teolhanol.domain.report.entity.Block(user(shepherd), user(me)));
+
+        String body = block(me, "WORRY_SHEEP", theirs.getId()).andExpect(status().isNotFound())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("상대목동");
+        assertThat(blockRepository.count()).isEqualTo(1);
+        assertThat(blockRepository.existsByBlockerIdAndBlockedId(me.userId(), shepherd.userId())).isFalse();
+    }
+
+    @Test
+    void 서로_차단한_사이면_내_기존_차단을_200으로_돌려준다() throws Exception {
+        WorrySheep theirs = sheep(shepherd);
+        long id = blockId(block(me, "WORRY_SHEEP", theirs.getId()).andExpect(status().isCreated()));
+        blockRepository.saveAndFlush(new com.ganzithon.teolhanol.domain.report.entity.Block(user(shepherd), user(me)));
+
+        block(me, "WORRY_SHEEP", theirs.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.blockId").value(id));
+        assertThat(blockRepository.count()).isEqualTo(2);
+    }
+
+    @Test
     void blockUser는_멱등이다() {
         var first = blockService.blockUser(me.userId(), shepherd.userId());
         var again = blockService.blockUser(me.userId(), shepherd.userId());

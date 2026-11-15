@@ -49,7 +49,7 @@ com.ganzithon.teolhanol
 │   ├── config
 │   ├── exception
 │   └── response
-└── domain          # 기능별 도메인 (auth, diary, care, sheep, farm, wool, safety, report)
+└── domain          # 기능별 도메인 (user, diary, care, sheep, farm, worry, wool, safety, report, notification)
 ```
 
 ## 민감정보 암호화
@@ -123,7 +123,7 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 
 - 규칙(와이어프레임 v3): 2~10자, 한글·영문·숫자와 띄어쓰기 한 칸, 중복 불가(대소문자 무시), 사칭 단어·금칙어·개인정보 패턴 불가. 길이는 `app.policy.auth.nickname-min/max-length`로 조정합니다. 가입 화면의 `GET /auth/nickname/availability`와 가입, 닉네임 바꾸기가 같은 검사(`NicknameValidator`)를 씁니다.
 - `PUT /users/me/nickname` `{ "nickname": "..." }` (로그인 필요): 나 탭 '닉네임 바꾸기'(ME-02). 응답은 `{userId, nickname}`. 쓸 수 없으면 409 `ACCOUNT_NICKNAME_UNAVAILABLE`과 이유 문구, 지금 닉네임과 같으면 그대로 성공, 내 이름의 대소문자만 바꾸는 것은 허용. 이미 올린 고민·조언에는 사용자 id로 연결되어 새 닉네임이 그대로 보입니다.
-- 금칙어·개인정보 검사(#33, #34)는 `NicknameContentFilter` 빈을 만들면 가입과 닉네임 바꾸기 모두에 자동으로 적용됩니다.
+- 금칙어(`BannedWordNicknameFilter`)와 개인정보 패턴(`PiiNicknameContentFilter`) 검사가 `NicknameContentFilter` 빈으로 가입과 닉네임 바꾸기 모두에 적용됩니다.
 
 ## 나의 양 꾸미기 (SHP-03)
 
@@ -131,7 +131,7 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - `PUT /my-sheep/items` `{ "craft": ["SCARF"], "equipped": ["SCARF"] }`: `craft`는 털실로 만들 아이템(이미 가진 건 털실을 쓰지 않고 건너뜀), `equipped`는 저장 후 착용할 전체 목록(없는 건 해제, 생략하면 변경 없음). 응답은 `GET /my-sheep/items`와 같은 모양.
 - 털실이 모자라면 409 `SHEEP_YARN_NOT_ENOUGH`(아무것도 바뀌지 않음), 만들지 않은 아이템을 착용하면 409 `SHEEP_ITEM_NOT_OWNED`, 알 수 없는 코드는 400. 꾸미기는 털 단계에 영향이 없습니다.
 - 아이템 이름과 필요 털실은 `application.yml`의 `app.sheep-items.items`(고정 데이터)에서 바꿉니다. 지금 값은 와이어프레임 v3(ME-03) 기준 모자 5, 방울 8, 리본 3이고, 목도리(3)는 화면에 값이 없어 임시 값입니다.
-- 털실은 목장에서 조언을 보낼 때 쌓이므로(#27) 그 기능이 머지될 때까지는 DB에서 `users.yarn_count`를 직접 올려 확인합니다.
+- 털실은 고민 목장에서 조언을 보낼 때마다 1개씩 쌓입니다(`POST /worry-sheep/{id}/wools`).
 
 ## 기록 전체 삭제와 탈퇴 (ACC-03)
 
@@ -139,6 +139,91 @@ r.isCrisis();   // true면 상담 연결로 전환 (SAF-02)
 - `DELETE /me`: 탈퇴. 대화·기록, 나의 양과 아이템, 위기 판정 로그, 내 고민 양(거기 달린 다른 사람의 조언과 '고마워요' 포함), 내가 보낸 조언, 내가 한 신고와 내 고민·조언에 대한 신고, 차단 관계(내가 한 것·나를 한 것)를 모두 지우고 마지막에 계정을 지움. 한 트랜잭션이라 실패하면 아무것도 지워지지 않음. 같은 이메일로 다시 가입할 수 있고 새 계정으로 시작.
 - 다른 사람 고민 양에 이미 쌓인 털 수는 그대로 둠(조언 글만 사라지고 양의 단계는 유지).
 - **새 기능이 사용자와 연결된 데이터를 만들면**(예: 푸시 구독 #28) `UserDataEraser`를 구현한 빈을 추가해 탈퇴 때 함께 지워지게 하세요(`domain/user/service/erase/` 참고, `@Order`로 순서 지정). 사용자를 참조하는 엔티티가 새로 생기면 `UserDataErasureCoverageTest`가 실패해서 빠뜨리지 않게 알려 줍니다.
+
+## 고민 목장 (B 영역)
+
+목장 관련 응답에는 다른 사용자의 id·이메일을 넣지 않고 닉네임만 보냅니다. 털 개수 숫자 대신 단계(`stage`, `stageName`)만 내려갑니다. `createdAt` 같은 시각은 시간대 표시가 없는 Asia/Seoul 시각입니다.
+
+### 목장과 고민 양 (FRM-01, FRM-03~07)
+
+| Method | Endpoint | 설명 |
+| --- | --- | --- |
+| GET | `/farms` | 목장 4곳과 `waitingCount`(ACTIVE 양 수, 사용자별 조건 미적용) |
+| GET | `/farms/{farmCode}/sheep?page=0` | 풀밭 목록. `all` 가능, 20마리씩, `hasNext` |
+| POST | `/farms/{farmCode}/sheep` | 고민 올리기 `{ content }` (1~200자, 하루 3마리) |
+| GET | `/worry-sheep/{id}` | 양 상세. 주인에게만 `wools`(받은 조언) |
+| GET | `/worry-sheep/me?status=active\|graduated` | 내 고민. `newWoolCount`는 마지막으로 상세를 본 뒤 도착한 조언 수 |
+| POST | `/worry-sheep/{id}/graduate` | 주인이 직접 졸업(멱등) |
+| GET | `/diaries/{id}/farm-recommendation` | 케어 마무리에서 올릴 목장 추천(규칙 기반, `FarmRecommender`) |
+
+- 풀밭 정렬: 내가 이미 조언을 보낸 양은 뒤로 → 털 적은 순 → 오래된 순. 제외: ACTIVE가 아닌 양, 내 양, 차단 관계(양방향).
+- 보호 양(위험도 CAUTION)은 보낸 조언이 `app.policy.worry.protected-view-min-sent-wools`(5)회 이상인 사용자에게만 보입니다. 열람 판단은 `WorrySheepAccess` 한 곳에 있고 상세·조언 보내기·신고·차단이 함께 씁니다. 볼 수 없는 양은 존재 여부를 흘리지 않도록 모두 404입니다.
+- 고민 올리기 응답은 `status`로 구분합니다: `CREATED`(201) / `CRISIS`(200, 양을 만들지 않고 `crisisHelp`에 상담 연결 정보, 24시간 배너 켜짐) / `PII_REJECTED`(200, 저장하지 않음). 처리 순서는 목장 확인 → 길이 → 하루 한도 → 개인정보 → 위험도 분류입니다.
+- **LLM이 꺼져 있거나 분류에 실패하면 위기 키워드 판정만 쓰고, 위기가 아닌 고민은 보호 양으로 등록됩니다.** 이 상태에서는 새 고민이 조언 이력 5회 미만인 사용자에게 보이지 않으니, 시연 환경에서는 LLM 키가 들어 있는지 먼저 확인하세요.
+- 졸업 경로는 세 가지입니다: 주인의 직접 졸업, 털 `wool-cap`(10)개 도달(조언 보내기 트랜잭션 안에서), 작성 후 `auto-graduate-days`(7)일 경과(`@Scheduled`, `app.policy.worry.auto-graduate-cron` 기본 매시 정각). 스케줄은 `app.scheduling.enabled=false`로 끌 수 있고 테스트 프로필에서는 꺼져 있습니다.
+
+### 조언(털) (WOL-01, WOL-03)
+
+`POST /worry-sheep/{id}/wools` `{ "content": "...", "sendAsIs": false }` (1~100자)
+
+| status | HTTP | 내용 |
+| --- | --- | --- |
+| `SENT` | 201 | `woolId, sheepStage, sheepStageName, stageUp, graduated, yarnAdded, yarnCount` |
+| `SUGGEST` | 200 | 저장하지 않음. `category, categoryLabel, message, suggestion`(없으면 키가 빠짐). 그대로 보내려면 `sendAsIs=true`로 다시 요청 |
+| `BLOCKED` | 200 | 저장하지 않음. `category`(`BANNED_WORD` 또는 `PII`), `message` |
+
+- 순서: 길이 → 권한 → 개인정보(`PiiDetector`) → 다시 확인(`AdviceChecker`) → 저장. `BLOCKED`는 `sendAsIs`와 관계없이 막습니다.
+- 저장은 한 트랜잭션에서 양 행과 보낸 사람 행을 잠그고 조언 저장, 양 털 +1과 단계 재계산, 보낸 사람 털실 +1·보낸 수 +1을 처리합니다. 동시에 여러 명이 보내도 털은 상한을 넘지 않습니다.
+- 오류: 내 양 403 `WOOL_OWN_SHEEP`, 중복 409 `WOOL_ALREADY_SENT`, 졸업한 양 409 `WORRY_SHEEP_GRADUATED`, 볼 수 없는 양 404.
+- `POST /wools/{id}/thanks`: 그 조언이 달린 양의 주인만, 조언당 1회(중복 409 `THANKS_ALREADY_SENT`). 보상은 없습니다.
+
+### 안전 (SAF-02, SAF-04, SAF-05)
+
+- `GET /help/crisis`(비회원 가능): 상담 연결 화면 정보(109, 1577-0199, 119). `GET /help/crisis/banner`(로그인): `{ active, crisisBannerUntil }`. 상담 정보는 `CrisisHelpInfo` 한 곳에 있습니다.
+- `PiiDetector.containsPii(text)`: 시드의 PII 정규식(전화번호, 이메일, SNS 아이디, 오픈채팅 링크, 계좌번호). 고민·조언·닉네임에 적용됩니다.
+- `AdviceChecker.check(content)` → `PASS | SUGGEST | BLOCKED`. 1차 금칙어(`BannedWordFilter`, 부분 일치·띄어쓰기 무시)는 LLM 없이 `BLOCKED`, 2차 LLM 어조 분류(BLAME, LECTURE, COMPARE, MOCK, DIAGNOSIS, SOLICIT)는 `SUGGEST`와 바꾼 문장. LLM이 실패하면 금칙어 판정만 씁니다. 프롬프트는 `prompts/advice-check.txt`.
+- 닉네임에는 금칙어·개인정보 필터가 `NicknameContentFilter` 빈으로 자동 적용됩니다.
+- 시드는 없는 패턴만 추가합니다. 시드에서 고친 패턴(PII 정규식 3개)의 옛 값은 이미 시드된 DB에 남으므로 지워 주세요.
+
+### 신고와 차단 (RPT-01, RPT-02)
+
+- `POST /reports` `{ targetType: WORRY_SHEEP|WOOL, targetId, reason: ABUSIVE|PERSONAL_INFO|SPAM|LOOKS_DANGEROUS|ETC, blockUser }` → 201 `{ reportId, hidden, blocked }`. 중복 409 `REPORT_DUPLICATED`, 내 글 400 `REPORT_OWN_CONTENT`.
+- 서로 다른 신고자 `auto-hide-report-count`(3)명이 신고하면 자동으로 숨깁니다(양은 HIDDEN, 조언은 `wools.hidden`). `LOOKS_DANGEROUS`는 1회만으로 글쓴이에게 24시간 상담 배너를 켭니다.
+- 받은 조언은 고민 주인에게만 보이므로 조언을 신고할 수 있는 사람은 주인 1명뿐입니다. 조언의 3회 누적 숨김은 지금 규칙으로는 일어나지 않습니다(정책 결정 필요).
+- `POST /blocks` `{ targetType, targetId }`(양 또는 조언 id로 지정, 멱등), `GET /blocks`, `DELETE /blocks/{id}`. 차단하면 서로의 양이 목록과 상세에서 보이지 않습니다.
+
+### 털 도착 알림 (WOL-02)
+
+| Method | Endpoint | 설명 |
+| --- | --- | --- |
+| GET | `/push/vapid-public-key` | `{ publicKey, enabled }`. 키가 없으면 `enabled=false` |
+| POST | `/push/subscriptions` | `{ endpoint, keys: { p256dh, auth } }`. 새 구독 201, 같은 endpoint면 소유자를 바꾸고 200 |
+| DELETE | `/push/subscriptions` | `{ endpoint }` 구독 해지(멱등) |
+| GET | `/notifications/stream` | 앱 안 알림 SSE. 케어 대화처럼 헤더를 실을 수 있는 `fetch` 스트림으로 읽습니다 |
+
+- 조언이 저장되면 양 주인에게 `wool-arrived`, 고마워요를 누르면 조언을 보낸 사람에게 `wool-thanked` 이벤트가 갑니다. 데이터는 `{ type, title, body, sheepId, url }`이고 웹 푸시 payload도 같습니다. 조언 내용과 닉네임은 넣지 않습니다. 고마워요 알림은 `url`이 null입니다.
+- 알림은 트랜잭션이 커밋된 뒤에만 보내고(`@TransactionalEventListener`), 발송이 실패해도 조언 저장에는 영향이 없습니다. 푸시 서비스가 404/410을 돌려준 구독은 지웁니다.
+- 웹 푸시는 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`가 있어야 켜집니다(`npx web-push generate-vapid-keys`). 키가 없어도 서버는 뜨고 구독 저장과 SSE는 동작합니다.
+- 구독 endpoint는 https이고 `app.push.allowed-hosts`(FCM, Mozilla, Apple, Windows 푸시 서비스)에 있는 호스트만 받습니다. 그 밖은 400 `PUSH_ENDPOINT_NOT_ALLOWED`입니다.
+- 알림을 눌렀을 때 열 경로는 `app.push.click-url-pattern`(기본 `/farm/my/{sheepId}`)에서 바꿉니다.
+- SSE 연결은 서버 메모리에 있으므로 서버를 여러 대로 늘리면 다른 서버에 연결된 탭에는 앱 안 알림이 가지 않습니다. 연결은 30분 뒤 끝나고 사용자당 5개까지입니다.
+- 푸시 구독은 탈퇴 때 `PushSubscriptionEraser`가 지웁니다.
+
+### B 영역 오류 코드
+
+| HTTP | 코드 | 상황 |
+| --- | --- | --- |
+| 400 | `SAFETY_PII_DETECTED` | 개인정보 패턴(고민·조언은 오류 대신 정상 응답의 `status`로 알림) |
+| 400 | `BLOCK_SELF` | 나 자신을 차단 |
+| 400 | `REPORT_OWN_CONTENT` | 내가 쓴 글을 신고 |
+| 400 | `PUSH_ENDPOINT_NOT_ALLOWED` | 허용하지 않는 푸시 endpoint |
+| 403 | `WOOL_OWN_SHEEP` | 내 고민 양에 조언 |
+| 404 | `FARM_NOT_FOUND` | 없는 목장 코드 |
+| 409 | `WOOL_ALREADY_SENT` | 같은 양에 두 번째 조언 |
+| 409 | `WORRY_SHEEP_GRADUATED` | 졸업했거나 털이 다 찬 양에 조언 |
+| 409 | `THANKS_ALREADY_SENT` | 이미 고마워요를 누른 조언 |
+| 409 | `REPORT_DUPLICATED` | 같은 대상을 다시 신고 |
+| 429 | `WORRY_DAILY_LIMIT_EXCEEDED` | 고민 올리기 하루 3마리 초과 |
 
 ## 시드 데이터와 정책 수치
 
