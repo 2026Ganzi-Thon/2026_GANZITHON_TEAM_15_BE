@@ -1,8 +1,5 @@
 package com.ganzithon.teolhanol.domain.worry.service;
 
-import com.ganzithon.teolhanol.domain.report.repository.BlockRepository;
-import com.ganzithon.teolhanol.domain.user.entity.User;
-import com.ganzithon.teolhanol.domain.user.repository.UserRepository;
 import com.ganzithon.teolhanol.domain.wool.entity.Wool;
 import com.ganzithon.teolhanol.domain.wool.repository.ThanksRepository;
 import com.ganzithon.teolhanol.domain.wool.repository.WoolRepository;
@@ -10,10 +7,8 @@ import com.ganzithon.teolhanol.domain.worry.dto.WorrySheepDetailResponse;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
 import com.ganzithon.teolhanol.domain.worry.repository.WorrySheepRepository;
-import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import com.ganzithon.teolhanol.global.exception.BusinessException;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
-import com.ganzithon.teolhanol.global.policy.PolicyProperties;
 import com.ganzithon.teolhanol.global.policy.SheepStage;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -31,28 +26,17 @@ public class WorrySheepDetailService {
     private final WorrySheepRepository worrySheepRepository;
     private final WoolRepository woolRepository;
     private final ThanksRepository thanksRepository;
-    private final BlockRepository blockRepository;
-    private final UserRepository userRepository;
-    private final PolicyProperties policy;
+    private final WorrySheepAccess access;
 
     /** 주인이 조회하면 '확인한 시각'을 남기므로 쓰기 트랜잭션입니다. */
     @Transactional
     public WorrySheepDetailResponse get(Long viewerId, Long sheepId) {
         WorrySheep sheep = worrySheepRepository.findDetailById(sheepId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        Long ownerId = sheep.getUser().getId();
-        boolean mine = ownerId.equals(viewerId);
-
-        if (sheep.getStatus() == WorrySheepStatus.HIDDEN) {
+        boolean mine = access.isOwner(sheep, viewerId);
+        boolean alreadySent = !mine && !access.isHidden(sheep) && access.hasSent(sheepId, viewerId);
+        if (!access.canView(sheep, viewerId, alreadySent)) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
-        }
-        boolean alreadySent = !mine && woolRepository.existsBySheepIdAndSenderId(sheepId, viewerId);
-        if (!mine) {
-            if (sheep.getStatus() == WorrySheepStatus.GRADUATED
-                    || blockRepository.existsBetween(viewerId, ownerId)
-                    || (sheep.getRiskLevel() == RiskLevel.CAUTION && !alreadySent && !hasEnoughHistory(viewerId))) {
-                throw new BusinessException(ErrorCode.NOT_FOUND);
-            }
         }
 
         List<WorrySheepDetailResponse.WoolItem> wools = null;
@@ -81,14 +65,9 @@ public class WorrySheepDetailService {
                 wools);
     }
 
-    private boolean hasEnoughHistory(Long viewerId) {
-        return userRepository.findById(viewerId)
-                .map(User::getSentWoolCount)
-                .orElse(0) >= policy.worry().protectedViewMinSentWools();
-    }
-
+    /** 신고 누적으로 숨겨진 조언(RPT-01)은 빼고 보여줍니다. */
     private List<WorrySheepDetailResponse.WoolItem> receivedWools(Long sheepId) {
-        List<Wool> wools = woolRepository.findAllWithSenderBySheepId(sheepId);
+        List<Wool> wools = woolRepository.findAllVisibleWithSenderBySheepId(sheepId);
         Set<Long> thanked = new HashSet<>(thanksRepository.findThankedWoolIdsBySheepId(sheepId));
         return wools.stream()
                 .map(w -> new WorrySheepDetailResponse.WoolItem(w.getId(), w.getContent(),

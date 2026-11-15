@@ -1,6 +1,5 @@
 package com.ganzithon.teolhanol.domain.wool.service;
 
-import com.ganzithon.teolhanol.domain.report.repository.BlockRepository;
 import com.ganzithon.teolhanol.domain.user.entity.User;
 import com.ganzithon.teolhanol.domain.user.repository.UserRepository;
 import com.ganzithon.teolhanol.domain.wool.dto.WoolSendResponse;
@@ -10,7 +9,7 @@ import com.ganzithon.teolhanol.domain.wool.repository.WoolRepository;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheep;
 import com.ganzithon.teolhanol.domain.worry.entity.WorrySheepStatus;
 import com.ganzithon.teolhanol.domain.worry.repository.WorrySheepRepository;
-import com.ganzithon.teolhanol.global.enums.RiskLevel;
+import com.ganzithon.teolhanol.domain.worry.service.WorrySheepAccess;
 import com.ganzithon.teolhanol.global.exception.BusinessException;
 import com.ganzithon.teolhanol.global.exception.ErrorCode;
 import com.ganzithon.teolhanol.global.policy.PolicyProperties;
@@ -32,7 +31,7 @@ class WoolSendWriter {
     private final WorrySheepRepository worrySheepRepository;
     private final WoolRepository woolRepository;
     private final UserRepository userRepository;
-    private final BlockRepository blockRepository;
+    private final WorrySheepAccess access;
     private final ApplicationEventPublisher eventPublisher;
     private final PolicyProperties policy;
 
@@ -79,19 +78,17 @@ class WoolSendWriter {
      */
     private void verify(WorrySheep sheep, User sender) {
         Long senderId = sender.getId();
-        Long ownerId = sheep.getUser().getId();
-        if (sheep.getStatus() == WorrySheepStatus.HIDDEN) {
+        if (access.isHidden(sheep)) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
-        if (ownerId.equals(senderId)) {
+        if (access.isOwner(sheep, senderId)) {
             throw new BusinessException(ErrorCode.WOOL_OWN_SHEEP);
         }
-        if (blockRepository.existsBetween(senderId, ownerId)) {
+        if (access.isBlockedBetween(senderId, sheep.getUser().getId())) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
-        boolean alreadySent = woolRepository.existsBySheepIdAndSenderId(sheep.getId(), senderId);
-        if (sheep.getRiskLevel() == RiskLevel.CAUTION && !alreadySent
-                && sender.getSentWoolCount() < policy.worry().protectedViewMinSentWools()) {
+        boolean alreadySent = access.hasSent(sheep.getId(), senderId);
+        if (!access.canSeeRisk(sheep, sender, alreadySent)) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
         if (alreadySent) {

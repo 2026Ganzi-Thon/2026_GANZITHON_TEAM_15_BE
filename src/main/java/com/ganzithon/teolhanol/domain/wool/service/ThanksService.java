@@ -37,7 +37,8 @@ public class ThanksService {
         WorrySheep sheep = worrySheepRepository.findByIdForUpdate(wool.getSheep().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         // 주인이 아니거나 숨긴 양이면 조언이 있는지 알 수 없도록 404로 답합니다.
-        if (!sheep.getUser().getId().equals(userId) || sheep.getStatus() == WorrySheepStatus.HIDDEN) {
+        if (!sheep.getUser().getId().equals(userId) || sheep.getStatus() == WorrySheepStatus.HIDDEN
+                || wool.isHidden()) {
             throw new BusinessException(ErrorCode.NOT_FOUND);
         }
         if (thanksRepository.existsByWoolId(woolId)) {

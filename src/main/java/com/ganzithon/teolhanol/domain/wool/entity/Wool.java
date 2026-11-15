@@ -53,6 +53,10 @@ public class Wool {
     @Column(name = "sent_as_is", nullable = false)
     private boolean sentAsIs;
 
+    /** 신고 누적으로 숨겨진 조언인지 (RPT-01). 숨겨도 양에 이미 쌓인 털 수는 줄이지 않습니다. */
+    @Column(nullable = false)
+    private boolean hidden;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -62,5 +66,11 @@ public class Wool {
         this.sender = sender;
         this.content = content;
         this.sentAsIs = sentAsIs;
+        this.hidden = false;
+    }
+
+    /** 신고 누적으로 고민 주인에게 보이지 않게 숨깁니다 (RPT-01). */
+    public void hide() {
+        this.hidden = true;
     }
 }
