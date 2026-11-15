@@ -1,6 +1,6 @@
 # ERD
 
-기능명세서 7장 데이터 모델(2026-11-08, 와이어프레임 v2 기준)을 기준으로 합니다. 명세서 대비 추가한 컬럼은 아래 "명세서와 다른 점"에 정리했습니다.
+기능명세서 7장 데이터 모델(2026-11-08, 와이어프레임 v2 기준, 2026-11-15에 B 영역 반영)을 기준으로 합니다. 명세서 대비 추가한 컬럼은 아래 "명세서와 다른 점"에 정리했습니다.
 
 ```mermaid
 erDiagram
@@ -146,6 +146,15 @@ erDiagram
 | reports | uk_report_reporter_target (UNIQUE) | reporter_id, target_type, target_id | 중복 신고 방지 |
 | blocks | uk_block_pair (UNIQUE) | blocker_id, blocked_id | 중복 차단 방지 |
 | safety_patterns | uk_safety_pattern (UNIQUE) | category, pattern | 중복 패턴 방지 |
+| worry_sheep | idx_worry_status_created | status, created_at | 7일 지난 양 자동 졸업 조회 (FRM-06) |
+| wools | idx_wool_sender | sender_id | 내가 보낸 조언 조회 |
+| care_messages | idx_care_message_diary | diary_id, created_at | 케어 대화 시간순 조회 |
+| push_subscriptions | uk_push_subscription_endpoint (UNIQUE) | endpoint | 같은 구독 중복 방지 (WOL-02) |
+| push_subscriptions | idx_push_subscription_user | user_id | 사용자별 구독 조회 |
+| crisis_logs | idx_crisis_log_user | user_id, created_at | 사용자별 위험도 판정 로그 |
+| reports | idx_report_target | target_type, target_id | 대상별 신고 누적 집계 (RPT-01) |
+| blocks | idx_block_blocked | blocked_id | 나를 차단한 사람 제외 조회 (RPT-02) |
+| my_sheep_items | uk_my_sheep_item (UNIQUE) | my_sheep_id, item_code | 같은 아이템 중복 보유 방지 |
 
 ## 명세서와 다른 점
 
@@ -154,7 +163,7 @@ erDiagram
 - `farms.tab_name`: 목장 화면 주제 탭 이름
 - `wools.sent_as_is`: 어조 제안을 받고도 그대로 보낸 조언 (SAF-04)
 - `wools.hidden`: 신고 누적으로 숨긴 조언. 주인 상세의 받은 조언 목록에서 빠짐 (RPT-01)
-- `worry_sheep.owner_checked_at`: 주인이 마지막으로 상세를 본 시각. 내 고민의 '새 털 n올' 계산에 사용 (FRM-05)
+- `worry_sheep.owner_checked_at`: 주인이 마지막으로 상세를 본 시각. 내 고민의 '새 털 n올' 계산에 사용 (FRM-05). 이 열만 갱신하는 전용 UPDATE와 `@DynamicUpdate`로 다른 요청의 상태 변경을 덮어쓰지 않으며, 그래서 상세를 확인해도 `updated_at`은 바뀌지 않음
 - `push_subscriptions`: 웹 푸시 구독. endpoint는 UNIQUE이고 탈퇴 때 함께 삭제 (WOL-02)
 - `users.login_fail_count`, `users.locked_until`: 로그인 실패 5회 시 5분 잠금 (ACC-02)
 - `users.crisis_banner_until`: 위기 판정 후 24시간 상담 배너, '위험해 보여요' 신고 배너 (SAF-02, RPT-01)
