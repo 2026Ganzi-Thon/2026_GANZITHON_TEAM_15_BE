@@ -78,4 +78,15 @@ public class WorrySheep extends BaseTimeEntity {
         this.stage = 1;
         this.status = WorrySheepStatus.ACTIVE;
     }
+
+    /** 졸업시킵니다 (FRM-06). */
+    public void graduate() {
+        this.status = WorrySheepStatus.GRADUATED;
+        this.graduatedAt = LocalDateTime.now();
+    }
+
+    /** 운영 정책·신고로 목장에서 숨깁니다. */
+    public void hide() {
+        this.status = WorrySheepStatus.HIDDEN;
+    }
 }
