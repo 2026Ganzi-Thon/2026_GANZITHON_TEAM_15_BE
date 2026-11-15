@@ -366,7 +366,7 @@ class WorryPostApiTest {
     void 없는_목장이면_404() throws Exception {
         postWorry("HOBBY", "취미 고민이에요.")
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("COMMON_404"));
+                .andExpect(jsonPath("$.error.code").value("FARM_NOT_FOUND"));
         assertThat(worrySheepRepository.count()).isZero();
     }
 

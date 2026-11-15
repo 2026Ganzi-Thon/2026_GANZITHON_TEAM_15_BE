@@ -77,7 +77,7 @@ public class WorryPostService {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "고민을 올릴 목장을 하나 골라 주세요.");
         }
         return farmRepository.findByCode(code)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "찾으시는 목장이 없어요."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
     }
 
     private String validContent(String rawContent) {

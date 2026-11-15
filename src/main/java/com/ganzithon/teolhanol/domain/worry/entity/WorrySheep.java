@@ -4,6 +4,7 @@ import com.ganzithon.teolhanol.domain.farm.entity.Farm;
 import com.ganzithon.teolhanol.domain.user.entity.User;
 import com.ganzithon.teolhanol.global.entity.BaseTimeEntity;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
+import com.ganzithon.teolhanol.global.policy.SheepStage;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -88,5 +89,17 @@ public class WorrySheep extends BaseTimeEntity {
     /** 운영 정책·신고로 목장에서 숨깁니다. */
     public void hide() {
         this.status = WorrySheepStatus.HIDDEN;
+    }
+
+    /**
+     * 조언(털) 한 올을 받습니다 (WOL-01). 털 상한(cap)에 닿았으면 더 늘리지 않고, 단계는 받은 털 수로 다시 정합니다.
+     * TODO(#27): 상한 도달 시 졸업 처리는 조언 보내기에서 정합니다.
+     */
+    public void addWool(int cap) {
+        if (woolCount >= cap) {
+            return;
+        }
+        woolCount++;
+        stage = SheepStage.ofWorrySheep(woolCount).getLevel();
     }
 }

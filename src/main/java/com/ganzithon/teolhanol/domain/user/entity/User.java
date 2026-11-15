@@ -82,6 +82,12 @@ public class User extends BaseTimeEntity {
         return true;
     }
 
+    /** 조언(털)을 하나 보냈습니다 (WOL-01). 털실 +1, 보낸 조언 수 +1 */
+    public void addSentWool() {
+        yarnCount++;
+        sentWoolCount++;
+    }
+
     /** 위기 판정 후 상담 안내 배너를 켭니다 (SAF-02). 이미 더 늦게 끝나는 배너가 있으면 유지합니다. */
     public void activateCrisisBanner(LocalDateTime until) {
         if (crisisBannerUntil == null || crisisBannerUntil.isBefore(until)) {
