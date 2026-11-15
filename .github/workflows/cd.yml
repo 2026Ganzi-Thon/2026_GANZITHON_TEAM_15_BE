@@ -93,7 +93,7 @@ jobs:
             docker logout ghcr.io
             # 새 컨테이너가 응답할 때까지 최대 90초 기다립니다.
             for i in $(seq 1 30); do
-              if curl -fsS http://localhost/health > /dev/null; then
+              if curl -fsS http://localhost:8080/health > /dev/null; then
                 echo "Deployed $IMAGE_TAG"
                 docker image prune -f > /dev/null
                 exit 0

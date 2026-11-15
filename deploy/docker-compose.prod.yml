@@ -9,11 +9,29 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: ${DB_URL:-jdbc:mysql://mysql:3306/teolhanol?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    # 앱은 서버 안에서만 열고(127.0.0.1), 바깥 요청은 아래 caddy가 HTTPS로 받아 전달합니다.
     ports:
-      - "80:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
+
+  # HTTPS 종단 (Let's Encrypt 인증서 자동 발급·갱신). 80 포트는 인증서 발급과 https 리다이렉트에 씁니다.
+  # DOMAIN 은 .env 에서 바꿀 수 있습니다. DNS 의 A 레코드가 이 서버를 가리켜야 합니다.
+  caddy:
+    image: caddy:2
+    container_name: teolhanol-caddy
+    restart: unless-stopped
+    command: caddy reverse-proxy --from ${DOMAIN:-teolhanol-api.duckdns.org} --to app:8080
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
 
   # 해커톤 규모에서는 같은 EC2에 MySQL을 함께 띄웁니다. RDS를 쓰면 .env 의 DB_URL 을 RDS 주소로 바꾸고 이 서비스는 지워도 됩니다.
   mysql:
@@ -38,3 +56,5 @@ services:
 
 volumes:
   mysql-data:
+  caddy-data:
+  caddy-config:
