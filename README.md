@@ -25,6 +25,8 @@ docker compose up -d
 
 접속 정보를 바꾸려면 `.env.example`을 `.env`로 복사해서 수정하세요. `.env`는 커밋하지 않습니다.
 
+프론트 출처는 `CORS_ALLOWED_ORIGINS`(쉼표 구분)로 허용합니다. `https://*.vercel.app`, `http://localhost:*` 같은 패턴도 쓸 수 있고, 비우면 아무 출처도 허용하지 않습니다.
+
 ## 테스트
 
 ```bash
