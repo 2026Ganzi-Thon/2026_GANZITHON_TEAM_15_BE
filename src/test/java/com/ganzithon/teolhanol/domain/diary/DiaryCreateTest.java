@@ -13,6 +13,13 @@ import com.ganzithon.teolhanol.domain.sheep.repository.MySheepRepository;
 import com.ganzithon.teolhanol.domain.user.repository.UserRepository;
 import com.ganzithon.teolhanol.global.enums.RiskLevel;
 import com.ganzithon.teolhanol.support.TestUsers;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,6 +101,34 @@ class DiaryCreateTest {
 
         pick("LONELY").andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.error.message").value("오늘은 충분히 이야기해 주셨어요. 내일 다시 들려주세요."));
+        assertThat(diaryRepository.count()).isEqualTo(3);
+    }
+
+    @Test
+    void 동시에_시작해도_하루_한도를_넘지_않는다() throws Exception {
+        int requests = 8;
+        ExecutorService pool = Executors.newFixedThreadPool(requests);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            List<Future<Integer>> results = new ArrayList<>();
+            for (int i = 0; i < requests; i++) {
+                Callable<Integer> call = () -> {
+                    start.await();
+                    return pick("JOY").andReturn().getResponse().getStatus();
+                };
+                results.add(pool.submit(call));
+            }
+            start.countDown();
+
+            List<Integer> statuses = new ArrayList<>();
+            for (Future<Integer> f : results) {
+                statuses.add(f.get());
+            }
+            assertThat(statuses).filteredOn(s -> s == 201).hasSize(3);
+            assertThat(statuses).filteredOn(s -> s == 429).hasSize(requests - 3);
+        } finally {
+            pool.shutdownNow();
+        }
         assertThat(diaryRepository.count()).isEqualTo(3);
     }
 
