@@ -26,10 +26,11 @@ public class DiaryService {
     /**
      * 감정을 골라 오늘의 마음을 만듭니다. 하루(서버 시간 0시 기준) 시작 한도를 넘으면 429로 안내합니다.
      * AI 첫 마디는 감정별 고정 문장이라 LLM을 부르지 않습니다.
+     * 같은 사용자의 동시 요청이 한도를 넘지 않도록 사용자 행을 잠근 뒤 세고 저장합니다(고민 올리기와 같은 방식).
      */
     @Transactional
     public DiaryCreateResponse create(Long userId, DiaryCreateRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
         long today = diaryRepository.countByUserIdAndCreatedAtGreaterThanEqual(
