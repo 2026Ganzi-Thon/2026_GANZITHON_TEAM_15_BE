@@ -75,8 +75,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(corsProperties.allowedOrigins());
+        // 정확한 주소와 '*' 패턴(예: https://*.vercel.app, http://localhost:*)을 한 목록으로 처리합니다.
+        // 비어 있으면 아무 출처도 허용하지 않습니다.
+        config.setAllowedOriginPatterns(corsProperties.originPatterns());
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+        // "*" 가 Authorization, Content-Type, Accept(SSE 포함)를 모두 포함합니다.
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
