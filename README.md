@@ -67,7 +67,8 @@ com.ganzithon.teolhanol
 
 - `POST /auth/login`, `POST /auth/signup` 응답의 `accessToken`을 `Authorization: Bearer {토큰}` 헤더로 보냅니다. 공개 경로(`SecurityConfig.PUBLIC_PATHS`) 외에는 토큰이 없으면 401입니다.
 - 현재 사용자 id: 컨트롤러 인자에 `@AuthenticationPrincipal AuthUser user` → `user.id()`.
-- 로그아웃은 서버에 상태가 없으므로 클라이언트가 토큰을 지웁니다. 연속 5번 실패하면 5분 잠깁니다(423 `ACCOUNT_LOCKED`).
+- 로그아웃은 서버에 상태가 없으므로 클라이언트가 토큰을 지웁니다(`POST /auth/logout`은 확인용 응답만 합니다). 연속 5번 실패하면 5분 잠깁니다(423 `ACCOUNT_LOCKED`).
+- `GET /users/me`: 내 `userId`와 `nickname`. 토큰이 아직 유효한지 확인할 때 씁니다.
 - 테스트에서 로그인 사용자가 필요하면 `@Import(TestUsers.class)` 후 `testUsers.signIn(email, nickname)` → `login.bearer()` (`src/test/.../support/TestUsers.java`).
 - 로컬은 개발용 키를 쓰고, 운영은 `APP_JWT_SECRET` 필수 (`openssl rand -base64 48`).
 
